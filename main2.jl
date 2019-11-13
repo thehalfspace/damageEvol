@@ -477,8 +477,12 @@ function main(P)
     alphaa                   = alphaa[1:it]
 
     #  return d, v, a, 2*v[P[4].iFlt] .+ P[2].Vpl
-    return output, alphaa
+    #  return output, alphaa
     file["O"] = output
+    file["P1"] = P[1]
+    file["P2"] = P[2]
+    file["P3"] = P[3]
+    file["P4"] = P[4]
 
     close(file)
 

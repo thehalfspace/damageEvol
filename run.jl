@@ -13,11 +13,11 @@
 using Printf, LinearAlgebra, DelimitedFiles, SparseArrays, JLD2,
     AlgebraicMultigrid, StaticArrays, IterativeSolvers, FEMSparse
 using Base.Threads
-BLAS.set_num_threads(2)
+#  BLAS.set_num_threads(1)
 
 include("$(@__DIR__)/par.jl")	    #	Set Parameters
 
-P = setParameters(0e3,8)      # args = fault zone depth, resolution
+P = setParameters(0e3,2)      # args = fault zone depth, resolution
 
 include("$(@__DIR__)/src/dtevol.jl")
 include("$(@__DIR__)/src/NRsearch.jl")
@@ -29,17 +29,11 @@ include("$(@__DIR__)/main2.jl")
 #  file  = jldopen("$(@__DIR__)/data/test02.jld2", "w")
 
 println(nthreads())
-simulation_time = @elapsed O, alphaa= @time main(P)
+simulation_time = @elapsed @time main(P)
 
 #  description = "homogeneous medium with high resolution"
 
 # Save output to file
-using Serialization
-open("$(@__DIR__)/data/test01.out", "w") do f
-    serialize(f,O)
-    serialize(f, simulation_time)
-    serialize(f, P)
-end
 
 println("\n")
 
