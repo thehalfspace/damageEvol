@@ -62,9 +62,36 @@
  eltype(M::ThreadedMul) = eltype(M.A)
  size(M::ThreadedMul, I...) = size(M.A, I...)
 
+function αD(α0, t, tStart, co, isolver)
+    if isolver == 1
+        aa = (log10(t/P[1].yr2sec)/log10(1.0e4 - t/P[1].yr2sec)) + co
+
+        if aa < α0
+            return α0
+        elseif aa > 1
+            return 1
+        else
+            return aa
+        end
+
+    #  elseif isolver == 2
+        #  aa = (co - 1.0e-3*(t - tStart))
+
+        #  if aa < 0.6
+            #  return 0.6
+        #  elseif aa > 1
+            #  return 1
+        #  else
+            #  return aa
+        #  end
+    else
+        return 1
+    end
+
+end
 
 # Save output to file dynamically
-file  = jldopen("$(@__DIR__)/data/test02.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/seismic_damage_increase.jld2", "w")
 
 function main(P)
 
@@ -188,8 +215,6 @@ function main(P)
 
     # on fault and off fault stiffness
     Ksparse = P[5]
-    # Indices of Stiffness matrix corresponding to the damaged zone
-    #  Ksparse = rcmpermute(P[5])
 
     # Linear solver stuff
     kni = -Ksparse[P[4].FltNI, P[4].FltNI]
@@ -204,12 +229,16 @@ function main(P)
     #   nKsparse = nKsparse'
     #   kni = kni'
 
-    Ksparse = ThreadedMul(Ksparse)
-    nKsparse = ThreadedMul(nKsparse)
-    kni = ThreadedMul(kni)
+    #  Ksparse = ThreadedMul(Ksparse)
+    #  nKsparse = ThreadedMul(nKsparse)
+    #  kni = ThreadedMul(kni)
 
     # Temporary Debugging variables: CLEAN UP LATER
     alphaa = ones(1000000)
+
+
+    # Damage evolution stuff
+    did = P[10]
 
     tStart = dt
 
@@ -380,6 +409,18 @@ function main(P)
             output.tauafter[:,it_e] = (tau + P[3].tauo)./1e6
             output.tEnd[it_e] = output.time_[it]
             slipstart = 0
+
+            # at the end of each earthquake, the shear wave velocity reduces by 10%
+            for id in did
+                Ksparse[id] = 0.9*Ksparse[id]
+
+                # Linear solver stuff
+                kni = -Ksparse[P[4].FltNI, P[4].FltNI]
+                nKsparse = -Ksparse
+                # multigrid
+                ml = ruge_stuben(kni)
+                p = aspreconditioner(ml)
+            end
 
         end
         #-----

@@ -25,7 +25,7 @@ function setParameters(FZdepth, res)
     dye::Float64 = LY/NelY #	Size of one element along Y
     Nel::Int = NelX*NelY # Total no. of elements
 
-    P::Int = 4		#	Lagrange polynomial degree
+    P::Int = 2		#	Lagrange polynomial degree
     NGLL::Int = P + 1 #	No. of Gauss-Legendre-Lobatto nodes
     FltNglob::Int = NelX*(NGLL - 1) + 1
 
@@ -42,7 +42,7 @@ function setParameters(FZdepth, res)
 
     yr2sec::Int = 365*24*60*60
 
-    Total_time::Int = 50*yr2sec     # Set the total time for simulation here
+    Total_time::Int = 70*yr2sec     # Set the total time for simulation here
 
     CFL::Float64 = 0.6	#	Courant stability number
 
@@ -154,7 +154,9 @@ function setParameters(FZdepth, res)
     Ksparse::SparseMatrixCSC{Float64} = stiffness_assembly(NGLL, NelX, NelY, dxe,dye, nglob, iglob, W)
 
     # Damage Indexed Kdam
-    #  Kdam, Kudam = damage_indx!(ThickX, ThickY, dxe, dye, NGLL, NelX, NelY, iglob)
+    did = damage_indx!(ThickX, ThickY, dxe, dye, NGLL, NelX, NelY, iglob)
+
+    #  return Ksparse, Kdam, iglob
     #  Kdam[Kdam .> 1.0] .= 1.0
 
     # Time solver variables
@@ -231,7 +233,7 @@ function setParameters(FZdepth, res)
     return params_int(Nel, FltNglob, yr2sec, Total_time, IDstate, nglob),
             params_float(ETA, Vpl, Vthres, Vevne, dt),
             params_farray(fo, Vo, xLf, M, BcLC, BcTC, FltB, FltZ, FltX, cca, ccb, Seff, tauo, XiLf, x_out, y_out),
-            params_iarray(iFlt, iBcL, iBcT, FltIglobBC, FltNI, out_seis), Ksparse, iglob, NGLL, wgll2, nglob
+            params_iarray(iFlt, iBcL, iBcT, FltIglobBC, FltNI, out_seis), Ksparse, iglob, NGLL, wgll2, nglob, did
 
 end
 
