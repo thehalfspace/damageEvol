@@ -234,7 +234,6 @@ function main(P)
     #  kni = ThreadedMul(kni)
 
     # Temporary Debugging variables: CLEAN UP LATER
-    alphaa = ones(1000000)
 
 
     # Damage evolution stuff
@@ -409,18 +408,20 @@ function main(P)
             output.tauafter[:,it_e] = (tau + P[3].tauo)./1e6
             output.tEnd[it_e] = output.time_[it]
             slipstart = 0
-
-            # at the end of each earthquake, the shear wave velocity reduces by 10%
-            for id in did
-                Ksparse[id] = 0.9*Ksparse[id]
-
-                # Linear solver stuff
-                kni = -Ksparse[P[4].FltNI, P[4].FltNI]
-                nKsparse = -Ksparse
-                # multigrid
-                ml = ruge_stuben(kni)
-                p = aspreconditioner(ml)
-            end
+            
+            println(it)
+            println(minimum(Ksparse))
+            # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
+            #  for id in did
+                #  Ksparse[id] = 0.9*Ksparse[id]
+            #  end
+            
+            #  # Linear solver stuff
+            #  kni = -Ksparse[P[4].FltNI, P[4].FltNI]
+            #  nKsparse = -Ksparse
+            #  # multigrid
+            #  ml = ruge_stuben(kni)
+            #  p = aspreconditioner(ml)
 
         end
         #-----

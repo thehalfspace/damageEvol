@@ -25,7 +25,7 @@ function setParameters(FZdepth, res)
     dye::Float64 = LY/NelY #	Size of one element along Y
     Nel::Int = NelX*NelY # Total no. of elements
 
-    P::Int = 2		#	Lagrange polynomial degree
+    P::Int = 4		#	Lagrange polynomial degree
     NGLL::Int = P + 1 #	No. of Gauss-Legendre-Lobatto nodes
     FltNglob::Int = NelX*(NGLL - 1) + 1
 
@@ -42,7 +42,7 @@ function setParameters(FZdepth, res)
 
     yr2sec::Int = 365*24*60*60
 
-    Total_time::Int = 70*yr2sec     # Set the total time for simulation here
+    Total_time::Int = 1000*yr2sec     # Set the total time for simulation here
 
     CFL::Float64 = 0.6	#	Courant stability number
 
