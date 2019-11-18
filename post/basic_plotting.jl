@@ -13,7 +13,7 @@ using StatsBase
 #  pgfplots()  # backed for latex-based plotting:
                # good for publication quality figures
 
-gr()    # backend for python based pyplot: good for quick viewing
+#  gr()    # backend for python based pyplot: good for quick viewing
 
 #   Plots.scalefontsizes(1.5)
 
@@ -62,7 +62,7 @@ function plot_cumulative_slip(delfsec, delf5yr, FltX)
     xaxis!(L"Accumulated\ Slip\ (m)"); #xlims!(10,30); #xticks!(-1:0.2:1)
     yaxis!(L"Depth\ (km)", yflip=true); ylims!(0,24); #yticks!(0:0.1:1)
     #  savefig(string(path, "cumulative_slip.svg"))
-    savefig(string(path, "cumulative_slip.pdf"))
+    #  savefig(string(path, "cumulative_slip.pdf"))
 
     plt
 end

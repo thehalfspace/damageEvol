@@ -42,7 +42,7 @@ function setParameters(FZdepth, res)
 
     yr2sec::Int = 365*24*60*60
 
-    Total_time::Int = 1000*yr2sec     # Set the total time for simulation here
+    Total_time::Int = 400*yr2sec     # Set the total time for simulation here
 
     CFL::Float64 = 0.6	#	Courant stability number
 
@@ -67,13 +67,13 @@ function setParameters(FZdepth, res)
     #  vs1::Float64 = 0.6*3464
 
     rho2::Float64 = 2500
-    vs2::Float64 = 0.60*vs1
+    vs2::Float64 = 0.99*vs1
 
     ETA = 0.
 
     # Low velocity layer dimensions
     ThickX::Float64 = LX - ceil(FZdepth/dxe)*dxe # ~FZdepth m deep
-    ThickY::Float64 = ceil(5e3/dye)*dye   # ~ 0.25*2 km wide
+    ThickY::Float64 = ceil(2e3/dye)*dye   # ~ 0.25*2 km wide
 
     # Damage multiplier
     #  α =

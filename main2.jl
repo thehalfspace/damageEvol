@@ -91,7 +91,7 @@ function αD(α0, t, tStart, co, isolver)
 end
 
 # Save output to file dynamically
-file  = jldopen("$(@__DIR__)/data/seismic_damage_increase.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/test01.jld2", "w")
 
 function main(P)
 
@@ -224,6 +224,11 @@ function main(P)
     p = aspreconditioner(ml)
     tmp = copy(a)
 
+    co = 1
+    alphaa = ones(700000)
+
+    tStart = dt
+
     # faster matrix multiplication
     #   Ksparse = Ksparse'
     #   nKsparse = nKsparse'
@@ -251,10 +256,6 @@ function main(P)
     while t < P[1].Total_time
         it = it + 1
         t = t + dt
-
-        if it == 1
-            #  alphaa[it] = 1
-        end
 
         output.time_[it] = t
 
@@ -325,6 +326,22 @@ function main(P)
             v[P[4].FltIglobBC] .= 0.
 
             # If isolver != 1, or max slip rate is < 10^-2 m/s
+
+            # Healing stuff
+            if it > 1
+                alphaa[it] = αD(alphaa[it-1], t, tStart, co, isolver)
+            
+                for id in did
+                    Ksparse[id] = alphaa[it]*Ksparse[id]
+                end
+            
+                # Linear solver stuff
+                kni = -Ksparse[P[4].FltNI, P[4].FltNI]
+                nKsparse = -Ksparse
+                # multigrid
+                ml = ruge_stuben(kni)
+                p = aspreconditioner(ml)
+            end
         else
 
 
@@ -409,19 +426,20 @@ function main(P)
             output.tEnd[it_e] = output.time_[it]
             slipstart = 0
             
-            println(it)
-            println(minimum(Ksparse))
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
-            #  for id in did
-                #  Ksparse[id] = 0.9*Ksparse[id]
-            #  end
+            alphaa[it] = 0.95
+            for id in did
+                Ksparse[id] = alphaa[it]*Ksparse[id]
+            end
             
-            #  # Linear solver stuff
-            #  kni = -Ksparse[P[4].FltNI, P[4].FltNI]
-            #  nKsparse = -Ksparse
-            #  # multigrid
-            #  ml = ruge_stuben(kni)
-            #  p = aspreconditioner(ml)
+            # Linear solver stuff
+            kni = -Ksparse[P[4].FltNI, P[4].FltNI]
+            nKsparse = -Ksparse
+            # multigrid
+            ml = ruge_stuben(kni)
+            p = aspreconditioner(ml)
+
+            co = αD(alphaa[it-1], t, tStart, co, isolver)
 
         end
         #-----
@@ -525,6 +543,7 @@ function main(P)
     file["P2"] = P[2]
     file["P3"] = P[3]
     file["P4"] = P[4]
+    file["alphaa"] = alphaa
 
     close(file)
 
