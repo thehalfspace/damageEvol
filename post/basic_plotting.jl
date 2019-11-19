@@ -16,6 +16,7 @@ using StatsBase
 #  gr()    # backend for python based pyplot: good for quick viewing
 
 #   Plots.scalefontsizes(1.5)
+pyplot()
 
 #-------------------------------
 # Initial Friction and Stresses
@@ -54,7 +55,7 @@ function plot_cumulative_slip(delfsec, delf5yr, FltX)
     indx = findall(abs.(FltX) .<= 18e3)[1]
     delfsec2 = delfsec[indx:end, :]
 
-    plt = plot(framestyle=[:box],grid=false, dpi=100)
+    plt = plot(framestyle=[:box],grid=false, dpi=200)
 
     plot!(delf5yr, -FltX/1e3, lc=:steelblue,label=:"", lw=0.5)
     plot!(delfsec2, -FltX[indx:end]/1e3, lc=:peru, label=:"", lw=0.5)
@@ -62,7 +63,7 @@ function plot_cumulative_slip(delfsec, delf5yr, FltX)
     xaxis!(L"Accumulated\ Slip\ (m)"); #xlims!(10,30); #xticks!(-1:0.2:1)
     yaxis!(L"Depth\ (km)", yflip=true); ylims!(0,24); #yticks!(0:0.1:1)
     #  savefig(string(path, "cumulative_slip.svg"))
-    #  savefig(string(path, "cumulative_slip.pdf"))
+    savefig(string(path, "cumulative_slip.pdf"))
 
     plt
 end

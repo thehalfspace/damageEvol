@@ -62,30 +62,17 @@
  eltype(M::ThreadedMul) = eltype(M.A)
  size(M::ThreadedMul, I...) = size(M.A, I...)
 
-function αD(α0, t, tStart, co, isolver)
-    if isolver == 1
-        aa = (log10(t/P[1].yr2sec)/log10(1.0e4 - t/P[1].yr2sec)) + co
+function αD(t, tStart, co)
+    aa = 0.00005*(log10((t-tStart)/P[1].yr2sec)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + 1.0
 
-        if aa < α0
-            return α0
-        elseif aa > 1
-            return 1
-        else
+    if aa < 1
+        if aa == 0.90
             return aa
+        else
+            return 1
         end
-
-    #  elseif isolver == 2
-        #  aa = (co - 1.0e-3*(t - tStart))
-
-        #  if aa < 0.6
-            #  return 0.6
-        #  elseif aa > 1
-            #  return 1
-        #  else
-            #  return aa
-        #  end
     else
-        return 1
+        return aa
     end
 
 end
@@ -329,11 +316,14 @@ function main(P)
 
             # Healing stuff
             if it > 1
-                alphaa[it] = αD(alphaa[it-1], t, tStart, co, isolver)
+                alphaa[it] = αD(t, tStart, co)
             
                 for id in did
                     Ksparse[id] = alphaa[it]*Ksparse[id]
                 end
+
+                #  println(it)
+                #  println(alphaa[it])
             
                 # Linear solver stuff
                 kni = -Ksparse[P[4].FltNI, P[4].FltNI]
@@ -427,7 +417,7 @@ function main(P)
             slipstart = 0
             
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
-            alphaa[it] = 0.95
+            alphaa[it] = 0.90
             for id in did
                 Ksparse[id] = alphaa[it]*Ksparse[id]
             end
@@ -439,7 +429,10 @@ function main(P)
             ml = ruge_stuben(kni)
             p = aspreconditioner(ml)
 
-            co = αD(alphaa[it-1], t, tStart, co, isolver)
+            #  co = αD(t, tStart, co)
+            #  println(isolver)
+            #  println(alphaa[it])
+            println("tStart = ", tStart)
 
         end
         #-----

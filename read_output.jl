@@ -10,7 +10,7 @@ include("post/basic_plotting.jl")
 # path to save files
 global path = "$(@__DIR__)/plots/test02/"
 
-file = jldopen("$(@__DIR__)/data/seismic_damage_increase.jld2", "r")
+file = jldopen("$(@__DIR__)/data/test01.jld2", "r")
 
 O = file["O"]
 seismic_stress = O.seismic_stress  
