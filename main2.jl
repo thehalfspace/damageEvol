@@ -62,23 +62,27 @@
  eltype(M::ThreadedMul) = eltype(M.A)
  size(M::ThreadedMul, I...) = size(M.A, I...)
 
-function αD(t, tStart, co)
-    aa = 0.00005*(log10((t-tStart)/P[1].yr2sec)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + 1.0
+# Save output to file dynamically not
+file  = jldopen("$(@__DIR__)/data/test03.jld2", "w")
 
-    if aa < 1
+
+function αD(t, tStart)
+    aa = 0.15*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + 0.9
+    #  aa = 1
+
+    if aa < 0.9
         if aa == 0.90
             return aa
         else
-            return 1
+            return 1.0
         end
+    elseif aa > 1.0
+        return 1.0
     else
         return aa
     end
 
 end
-
-# Save output to file dynamically
-file  = jldopen("$(@__DIR__)/data/test01.jld2", "w")
 
 function main(P)
 
@@ -203,6 +207,9 @@ function main(P)
     # on fault and off fault stiffness
     Ksparse = P[5]
 
+    # Intact rock stiffness
+    Korig = copy(Ksparse)   # K original
+
     # Linear solver stuff
     kni = -Ksparse[P[4].FltNI, P[4].FltNI]
     nKsparse = -Ksparse
@@ -213,8 +220,6 @@ function main(P)
 
     co = 1
     alphaa = ones(700000)
-
-    tStart = dt
 
     # faster matrix multiplication
     #   Ksparse = Ksparse'
@@ -316,10 +321,10 @@ function main(P)
 
             # Healing stuff
             if it > 1
-                alphaa[it] = αD(t, tStart, co)
+                alphaa[it] = αD(t, tStart)
             
                 for id in did
-                    Ksparse[id] = alphaa[it]*Ksparse[id]
+                    Ksparse[id] = alphaa[it]*Korig[id]
                 end
 
                 #  println(it)
@@ -403,10 +408,13 @@ function main(P)
             delfref = 2*d[P[4].iFlt] .+ P[2].Vpl*t
             slipstart = 1
             output.tStart[it_s] = output.time_[it]
-            tStart = output.time_[it]
             output.taubefore[:,it_s] = (tau +P[3].tauo)./1e6
             vhypo, indx = findmax(2*v[P[4].iFlt] .+ P[2].Vpl)
             output.hypo[it_s] = P[3].FltX[indx]
+            
+            if output.time_[it] > 50*P[1].yr2sec
+                tStart = output.time_[it]
+            end
 
         end
         if Vfmax < 0.99*P[2].Vthres && slipstart == 1
@@ -417,11 +425,14 @@ function main(P)
             slipstart = 0
             
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
-            alphaa[it] = 0.90
-            for id in did
-                Ksparse[id] = alphaa[it]*Ksparse[id]
-            end
-            
+            alphaa[it] = 0.9
+            println("alpha seismic = ", alphaa[it])
+            #  if output.tEnd[it_e] - output.tStart[it_s] > 10.0
+                for id in did
+                    Ksparse[id] = alphaa[it]*Korig[id]
+                end
+            #  end
+
             # Linear solver stuff
             kni = -Ksparse[P[4].FltNI, P[4].FltNI]
             nKsparse = -Ksparse
@@ -432,7 +443,7 @@ function main(P)
             #  co = αD(t, tStart, co)
             #  println(isolver)
             #  println(alphaa[it])
-            println("tStart = ", tStart)
+            #  println("tStart = ", tStart)
 
         end
         #-----
@@ -478,9 +489,13 @@ function main(P)
             idelevne = 0
         end
 
+        current_sliprate = 2*v[P[4].iFlt] .+ P[2].Vpl
+
         # Output timestep info on screen
         if mod(it,500) == 0
-            @printf("Time (yr) = %1.5g\n", t/P[1].yr2sec)
+            @printf("Time (yr) = %1.5g\n", t/P[1].yr2sec) 
+            #  println("Vfmax = ", maximum(current_sliprate))
+            println("alpha = ", alphaa[it])
         end
 
 
@@ -500,8 +515,6 @@ function main(P)
         end
 
         output.Vfmax[it] = Vfmax
-
-        current_sliprate = 2*v[P[4].iFlt] .+ P[2].Vpl
 
         # Compute next timestep dt
         dt = dtevol!(dt , dtmin, P[3].XiLf, P[1].FltNglob, NFBC, current_sliprate, isolver)
