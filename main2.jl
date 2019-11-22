@@ -63,24 +63,24 @@
  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/test03.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/test06.jld2", "w")
 
 
 function αD(t, tStart)
     aa = 0.15*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + 0.9
     #  aa = 1
 
-    if aa < 0.9
-        if aa == 0.90
-            return aa
-        else
-            return 1.0
-        end
-    elseif aa > 1.0
-        return 1.0
-    else
+    #  if aa < 0.899
+        #  #  if aa == 0.90
+            #  #  return aa
+        #  #  else
+            #  return 1.0
+        #  #  end
+    #  elseif aa > 1.0
+        #  return 1.0
+    #  else
         return aa
-    end
+    #  end
 
 end
 
@@ -317,7 +317,6 @@ function main(P)
             d[P[4].FltIglobBC] .= 0.
             v[P[4].FltIglobBC] .= 0.
 
-            # If isolver != 1, or max slip rate is < 10^-2 m/s
 
             # Healing stuff
             if it > 1
@@ -328,7 +327,7 @@ function main(P)
                 end
 
                 #  println(it)
-                #  println(alphaa[it])
+                #  println("t - tStart = ", (t - tStart)/P[1].yr2sec)
             
                 # Linear solver stuff
                 kni = -Ksparse[P[4].FltNI, P[4].FltNI]
@@ -337,6 +336,9 @@ function main(P)
                 ml = ruge_stuben(kni)
                 p = aspreconditioner(ml)
             end
+
+        
+        # If isolver != 1, or max slip rate is < 10^-2 m/s
         else
 
 
@@ -412,9 +414,8 @@ function main(P)
             vhypo, indx = findmax(2*v[P[4].iFlt] .+ P[2].Vpl)
             output.hypo[it_s] = P[3].FltX[indx]
             
-            if output.time_[it] > 50*P[1].yr2sec
-                tStart = output.time_[it]
-            end
+            #  if output.time_[it] > 50*P[1].yr2sec
+            #  end
 
         end
         if Vfmax < 0.99*P[2].Vthres && slipstart == 1
@@ -425,11 +426,12 @@ function main(P)
             slipstart = 0
             
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
-            alphaa[it] = 0.9
-            println("alpha seismic = ", alphaa[it])
+            alphaa[it] = 0.90
+            tStart = output.time_[it]
             #  if output.tEnd[it_e] - output.tStart[it_s] > 10.0
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]
+                    Korig[id] = alphaa[it]*Korig[id]
                 end
             #  end
 
@@ -495,7 +497,6 @@ function main(P)
         if mod(it,500) == 0
             @printf("Time (yr) = %1.5g\n", t/P[1].yr2sec) 
             #  println("Vfmax = ", maximum(current_sliprate))
-            println("alpha = ", alphaa[it])
         end
 
 

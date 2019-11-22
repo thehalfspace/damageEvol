@@ -21,8 +21,8 @@ include("$(@__DIR__)/par.jl")	    #	Set Parameters
 P = setParameters(48e3,4)      # args = fault zone depth, resolution
 
 include("$(@__DIR__)/src/dtevol.jl")
-include("$(@__DIR__)/src/NRsearch.jl")
-include("$(@__DIR__)/src/otherFunctions.jl")
+include("$(@__DIR__)/src/NRsearch_serial.jl")
+include("$(@__DIR__)/src/otherFunctions_serial.jl")
 
 include("$(@__DIR__)/main2.jl")
 
