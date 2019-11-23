@@ -63,11 +63,11 @@
  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/test06.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/test07.jld2", "w")
 
-
-function αD(t, tStart)
-    aa = 0.15*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + 0.9
+# Healing parameter
+function αD(t, tStart, dam)
+    aa = 0.15*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + 0.7
     #  aa = 1
 
     #  if aa < 0.899
@@ -235,6 +235,7 @@ function main(P)
 
     # Damage evolution stuff
     did = P[10]
+    dam = 1.0
 
     tStart = dt
 
@@ -320,13 +321,13 @@ function main(P)
 
             # Healing stuff
             if it > 1
-                alphaa[it] = αD(t, tStart)
+                alphaa[it] = αD(t, tStart, dam)
             
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]
                 end
 
-                #  println(it)
+                #  println("alpha healing = ", alphaa[it])
                 #  println("t - tStart = ", (t - tStart)/P[1].yr2sec)
             
                 # Linear solver stuff
@@ -341,6 +342,11 @@ function main(P)
         # If isolver != 1, or max slip rate is < 10^-2 m/s
         else
 
+            # Just for plotting alpha: I'm not changing the stiffness during seismic part
+            #  if it > 1
+                #  alphaa[it] = alphaa[it-1]
+                #  println("alphaa ", alphaa[it])
+            #  end
 
             dPre .= d
             vPre .= v
@@ -426,14 +432,13 @@ function main(P)
             slipstart = 0
             
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
-            alphaa[it] = 0.90
+            alphaa[it] = 0.70*dam
+            #  dam = 0.90^(it_e)
             tStart = output.time_[it]
-            #  if output.tEnd[it_e] - output.tStart[it_s] > 10.0
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]
-                    Korig[id] = alphaa[it]*Korig[id]
+                    #  Korig[id] = alphaa[it]*Korig[id]
                 end
-            #  end
 
             # Linear solver stuff
             kni = -Ksparse[P[4].FltNI, P[4].FltNI]
@@ -445,7 +450,7 @@ function main(P)
             #  co = αD(t, tStart, co)
             #  println(isolver)
             #  println(alphaa[it])
-            #  println("tStart = ", tStart)
+            println("alphaa = ", alphaa[it])
 
         end
         #-----
