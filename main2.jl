@@ -63,11 +63,11 @@
  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/test07.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/test08.jld2", "w")
 
 # Healing parameter
 function αD(t, tStart, dam)
-    aa = 0.15*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + 0.7
+    aa = 0.10*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) +dam
     #  aa = 1
 
     #  if aa < 0.899
@@ -76,11 +76,11 @@ function αD(t, tStart, dam)
         #  #  else
             #  return 1.0
         #  #  end
-    #  elseif aa > 1.0
-        #  return 1.0
-    #  else
+    if aa > 1.0
+        return 1.0
+    else
         return aa
-    #  end
+    end
 
 end
 
@@ -320,7 +320,7 @@ function main(P)
 
 
             # Healing stuff
-            if it > 1
+            if it > 1 #&& t/P[1].yr2sec > 10
                 alphaa[it] = αD(t, tStart, dam)
             
                 for id in did
@@ -432,8 +432,9 @@ function main(P)
             slipstart = 0
             
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
-            alphaa[it] = 0.70*dam
-            #  dam = 0.90^(it_e)
+            alphaa[it] = 0.90*alphaa[it-1]
+            dam = alphaa[it]
+            #  dam = 0.97^(it_e)
             tStart = output.time_[it]
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]

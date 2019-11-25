@@ -8,9 +8,9 @@ include("post/basic_plotting.jl")
 #  include("post/cumulative_slip.jl")
 
 # path to save files
-global path = "$(@__DIR__)/plots/test07/"
+global path = "$(@__DIR__)/plots/test08/"
 
-file = jldopen("$(@__DIR__)/data/test07.jld2", "r")
+file = jldopen("$(@__DIR__)/data/test08.jld2", "r")
 
 O = file["O"]
 seismic_stress = O.seismic_stress  
