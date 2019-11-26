@@ -63,11 +63,17 @@
  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/test08.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/test09.jld2", "w")
 
 # Healing parameter
 function αD(t, tStart, dam)
+
+    # First working version of healing
     aa = 0.10*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) +dam
+    
+    # Testing stuff
+    #  a = 0.065; b = 1000; c = -0.025
+    #  aa = a*(log10(b*(t-tStart)/P[1].yr2sec + 0.01)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + c + dam
     #  aa = 1
 
     #  if aa < 0.899
@@ -83,6 +89,13 @@ function αD(t, tStart, dam)
     end
 
 end
+
+
+# Damage parameter
+βD(it) = 0.07*log10.(it .+ 1) .+ 0.90
+
+betaa = βD(1:100)
+betaa[betaa .> 1] .= 1.0
 
 function main(P)
 
@@ -169,12 +182,12 @@ function main(P)
     output = results(zeros(P[1].FltNglob, 8000), zeros(P[1].FltNglob, 8000),
                      zeros(P[1].FltNglob, 8000),
                      zeros(10000),
-                     zeros(P[1].FltNglob, 2000), zeros(P[1].FltNglob, 2000),
-                     zeros(P[1].FltNglob, 2000),
+                     zeros(P[1].FltNglob, 4000), zeros(P[1].FltNglob, 4000),
+                     zeros(P[1].FltNglob, 4000),
                      zeros(80000,nseis), zeros(80000,nseis), zeros(80000,nseis),
-                     zeros(400), zeros(400),
-                     zeros(P[1].FltNglob, 400), zeros(P[1].FltNglob, 400),
-                     zeros(P[1].FltNglob, 400), zeros(400), zeros(700000),
+                     zeros(600), zeros(600),
+                     zeros(P[1].FltNglob, 600), zeros(P[1].FltNglob, 600),
+                     zeros(P[1].FltNglob, 600), zeros(600), zeros(700000),
                      zeros(700000))
 
     # Save output variables at certain timesteps: define those timesteps
@@ -320,7 +333,7 @@ function main(P)
 
 
             # Healing stuff
-            if it > 1 #&& t/P[1].yr2sec > 10
+            if it > 10 #&& t/P[1].yr2sec > 10
                 alphaa[it] = αD(t, tStart, dam)
             
                 for id in did
@@ -432,7 +445,10 @@ function main(P)
             slipstart = 0
             
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
-            alphaa[it] = 0.90*alphaa[it-1]
+            #  alphaa[it] = 0.90*alphaa[it-1]
+            #  dam = alphaa[it]
+            
+            alphaa[it] = betaa[it_e]*alphaa[it-1]
             dam = alphaa[it]
             #  dam = 0.97^(it_e)
             tStart = output.time_[it]
@@ -452,6 +468,7 @@ function main(P)
             #  println(isolver)
             #  println(alphaa[it])
             println("alphaa = ", alphaa[it])
+            println("betaa = ", betaa[it_e])
 
         end
         #-----

@@ -8,9 +8,9 @@ include("post/basic_plotting.jl")
 #  include("post/cumulative_slip.jl")
 
 # path to save files
-global path = "$(@__DIR__)/plots/test08/"
+global path = "$(@__DIR__)/plots/test09/"
 
-file = jldopen("$(@__DIR__)/data/test08.jld2", "r")
+file = jldopen("$(@__DIR__)/data/test09.jld2", "r")
 
 O = file["O"]
 seismic_stress = O.seismic_stress  
@@ -53,17 +53,3 @@ Mw, del_sigma, fault_slip = moment_magnitude_new(mu, P1, P3.FltX, delfafter, str
 
 
 # Temporary
-function reccurrence(tStart, yr2sec)
-    plt = plot(framestyle=[:box :grid])
-    
-    len = length(tStart) - 1
-
-    scatter!(range(1,len,step=1), diff(tStart./P1.yr2sec), ms=10, label=:"")
-    xaxis!("Intervent number"); #xlims!(1,7)
-    yaxis!("Recurrence Interval (yr)"); #ylims!(100,120)
-
-    savefig(string(path, "recint.png"))
-    savefig(string(path, "recint.pdf"))
-
-    plt
-end
