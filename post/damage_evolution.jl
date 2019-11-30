@@ -9,8 +9,8 @@ function plot_alpha(alphaa, time_)
 
     plt = plot(framestyle=[:box], size=(600,400), grid=false, dpi=200)
 
-    plot!(x, y, lc=:darkblue, label=:"",lw=0.5)
-    scatter!(x, y, mc=:darkblue, ms=5, label=:"")
+    #  plot!(x, y, lc=:darkblue, label=:"",lw=0.5)
+    scatter!(x, y, mc=:darkblue, ms=0.7, label=:"")
 
     xaxis!(L"Time\ (yr)") #xminorgrid=true
     #  xticks!(0:100:maximum(time_));

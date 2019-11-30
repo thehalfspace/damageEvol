@@ -63,7 +63,7 @@
  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/test09.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/test10.jld2", "w")
 
 # Healing parameter
 function αD(t, tStart, dam)
@@ -84,18 +84,23 @@ function αD(t, tStart, dam)
         #  #  end
     if aa > 1.0
         return 1.0
+    elseif aa < 0.6
+        return 0.6
     else
         return aa
     end
 
 end
 
-
+###---------------------------------###
 # Damage parameter
 βD(it) = 0.07*log10.(it .+ 1) .+ 0.90
 
-betaa = βD(1:100)
-betaa[betaa .> 1] .= 1.0
+#  betaa = βD(1:100)
+#  betaa[betaa .> 1] .= 1.0
+
+
+###----------------------------------###
 
 function main(P)
 
@@ -447,28 +452,38 @@ function main(P)
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
             #  alphaa[it] = 0.90*alphaa[it-1]
             #  dam = alphaa[it]
-            
-            alphaa[it] = betaa[it_e]*alphaa[it-1]
-            dam = alphaa[it]
-            #  dam = 0.97^(it_e)
-            tStart = output.time_[it]
-                for id in did
-                    Ksparse[id] = alphaa[it]*Korig[id]
-                    #  Korig[id] = alphaa[it]*Korig[id]
+            if output.tEnd[it_e] - output.tStart[it_s] > 10.0 
+                if alphaa[it-1] < 0.65
+                    alphaa[it] = 0.6
+                    dam = 0.6
+                else
+                    alphaa[it] = 0.90*alphaa[it-1]
+                    dam = alphaa[it]
                 end
+                
+                #  alphaa[it] = betaa[it_e]*alphaa[it-1]
+                #  dam = alphaa[it]
+                #  dam = 0.97^(it_e)
+                #  tStart = output.time_[it]
+                    for id in did
+                        Ksparse[id] = alphaa[it]*Korig[id]
+                        #  Korig[id] = alphaa[it]*Korig[id]
+                    end
 
-            # Linear solver stuff
-            kni = -Ksparse[P[4].FltNI, P[4].FltNI]
-            nKsparse = -Ksparse
-            # multigrid
-            ml = ruge_stuben(kni)
-            p = aspreconditioner(ml)
+                # Linear solver stuff
+                kni = -Ksparse[P[4].FltNI, P[4].FltNI]
+                nKsparse = -Ksparse
+                # multigrid
+                ml = ruge_stuben(kni)
+                p = aspreconditioner(ml)
+
+            end
 
             #  co = αD(t, tStart, co)
             #  println(isolver)
             #  println(alphaa[it])
             println("alphaa = ", alphaa[it])
-            println("betaa = ", betaa[it_e])
+            #  println("betaa = ", betaa[it_e])
 
         end
         #-----
