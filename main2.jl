@@ -36,34 +36,34 @@
 #  include("$(@__DIR__)/damageEvol.jl")	    #	Set Parameters
 
  # Threaded matrix multiplication
- import Base: eltype, size
- #  import LinearAlgebra: A_mul_B!
+ #  import Base: eltype, size
+ #  #  import LinearAlgebra: A_mul_B!
 
- struct ThreadedMul{Tv,Ti}
-         A::SparseMatrixCSC{Tv,Ti}
- end
+ #  struct ThreadedMul{Tv,Ti}
+         #  A::SparseMatrixCSC{Tv,Ti}
+ #  end
 
- function LinearAlgebra.mul!(y::AbstractVector, M::ThreadedMul, x::AbstractVector)
-     @threads for i = 1 : M.A.n
-          _threaded_mul!(y, M.A, x, i)
-     end
-      y
- end
+ #  function LinearAlgebra.mul!(y::AbstractVector, M::ThreadedMul, x::AbstractVector)
+     #  @threads for i = 1 : M.A.n
+          #  _threaded_mul!(y, M.A, x, i)
+     #  end
+      #  y
+ #  end
 
- @inline function _threaded_mul!(y, A::SparseMatrixCSC{Tv}, x, i) where {Tv}
-     s = zero(Tv)
-     @inbounds for j = A.colptr[i] : A.colptr[i + 1] - 1
-         s += A.nzval[j] * x[A.rowval[j]]
-     end
+ #  @inline function _threaded_mul!(y, A::SparseMatrixCSC{Tv}, x, i) where {Tv}
+     #  s = zero(Tv)
+     #  @inbounds for j = A.colptr[i] : A.colptr[i + 1] - 1
+         #  s += A.nzval[j] * x[A.rowval[j]]
+     #  end
 
-     @inbounds y[i] = s
-     y
- end
- eltype(M::ThreadedMul) = eltype(M.A)
- size(M::ThreadedMul, I...) = size(M.A, I...)
+     #  @inbounds y[i] = s
+     #  y
+ #  end
+ #  eltype(M::ThreadedMul) = eltype(M.A)
+ #  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/test10.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/final02.jld2", "w")
 
 # Healing parameter
 function αD(t, tStart, dam)
@@ -452,7 +452,7 @@ function main(P)
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
             #  alphaa[it] = 0.90*alphaa[it-1]
             #  dam = alphaa[it]
-            if output.tEnd[it_e] - output.tStart[it_s] > 10.0 
+            if output.tEnd[it_e] - output.tStart[it_s] > 20.0 
                 if alphaa[it-1] < 0.65
                     alphaa[it] = 0.6
                     dam = 0.6
@@ -476,13 +476,16 @@ function main(P)
                 # multigrid
                 ml = ruge_stuben(kni)
                 p = aspreconditioner(ml)
+            else
+                alphaa[it] = alphaa[it-1]
 
             end
+            
+            println("alphaa = ", alphaa[it])
 
             #  co = αD(t, tStart, co)
             #  println(isolver)
             #  println(alphaa[it])
-            println("alphaa = ", alphaa[it])
             #  println("betaa = ", betaa[it_e])
 
         end
