@@ -69,7 +69,7 @@ file  = jldopen("$(@__DIR__)/data/test02.jld2", "w")
 function αD(t, tStart, dam)
 
     # First working version of healing
-    aa = 0.10*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) +dam
+    aa = 0.10*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + dam
     
     if aa > 1.0
         return 1.0
@@ -83,7 +83,7 @@ end
 
 ###---------------------------------###
 # Damage parameter
-βD(it) = 0.07*log10.(it .+ 1) .+ 0.90
+#  βD(it) = 0.07*log10.(it .+ 1) .+ 0.90
 
 #  betaa = βD(1:100)
 #  betaa[betaa .> 1] .= 1.0
@@ -173,9 +173,9 @@ function main(P)
     #  hypo, time_, Vfmax
     nseis = length(P[4].out_seis)
 
-    output = results(zeros(P[1].FltNglob, 8000), zeros(P[1].FltNglob, 8000),
-                     zeros(P[1].FltNglob, 8000),
-                     zeros(10000),
+    output = results(zeros(P[1].FltNglob, 50000), zeros(P[1].FltNglob, 50000),
+                     zeros(P[1].FltNglob, 50000),
+                     zeros(50000),
                      zeros(P[1].FltNglob, 4000), zeros(P[1].FltNglob, 4000),
                      zeros(P[1].FltNglob, 4000),
                      zeros(80000,nseis), zeros(80000,nseis), zeros(80000,nseis),
@@ -225,7 +225,6 @@ function main(P)
     p = aspreconditioner(ml)
     tmp = copy(a)
 
-    co = 1
     alphaa = ones(700000)
 
     # faster matrix multiplication
@@ -335,7 +334,6 @@ function main(P)
                 end
 
                 #  println("alpha healing = ", alphaa[it])
-                #  println("t - tStart = ", (t - tStart)/P[1].yr2sec)
             
                 # Linear solver stuff
                 kni = -Ksparse[P[4].FltNI, P[4].FltNI]
@@ -348,12 +346,6 @@ function main(P)
         
         # If isolver != 1, or max slip rate is < 10^-2 m/s
         else
-
-            # Just for plotting alpha: I'm not changing the stiffness during seismic part
-            #  if it > 1
-                #  alphaa[it] = alphaa[it-1]
-                #  println("alphaa ", alphaa[it])
-            #  end
 
             dPre .= d
             vPre .= v
@@ -441,9 +433,11 @@ function main(P)
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
             #  alphaa[it] = 0.90*alphaa[it-1]
             #  dam = alphaa[it]
-            if output.tEnd[it_e] - output.tStart[it_s] > 2.0 
+            #  if output.tEnd[it_e] - output.tStart[it_s] > 2.0 
                 alphaa[it] = 0.90*alphaa[it-1]
                 dam = alphaa[it]
+
+                tStart = output.time_[it]
                 
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]
@@ -457,15 +451,11 @@ function main(P)
                 p = aspreconditioner(ml)
 
                 println("alphaa = ", alphaa[it])
-            end
-            
-
-            #  co = αD(t, tStart, co)
-            #  println(isolver)
-            #  println(alphaa[it])
-            #  println("betaa = ", betaa[it_e])
+            #  end
 
         end
+
+
         #-----
         # Output the variables certain timesteps: 2yr interseismic, 1 sec dynamic
         #-----
@@ -527,6 +517,7 @@ function main(P)
         end
 
         # Determine quasi-static or dynamic regime based on max-slip velocity
+        #  if isolver == 1 && Vfmax < 5e-3 || isolver == 2 && Vfmax < 2e-3
         if isolver == 1 && Vfmax < 5e-3 || isolver == 2 && Vfmax < 2e-3
             isolver = 1
         else
