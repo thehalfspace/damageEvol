@@ -75,7 +75,7 @@ function plot_Vfmax(Vfmax, time_)
 
     plt = plot(framestyle=[:box], grid=false, dpi=200)
 
-    plot!(time_, Vfmax, lc=:darkblue, label=:"",lw=0.5)
+    plot!(time_, Vfmax, lc=:darkblue, label=:"",lw=1.5)
 
     xaxis!(L"Time\ (yr)") #xminorgrid=true
     #  xticks!(0:100:maximum(time_));

@@ -441,22 +441,12 @@ function main(P)
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
             #  alphaa[it] = 0.90*alphaa[it-1]
             #  dam = alphaa[it]
-            if output.tEnd[it_e] - output.tStart[it_s] > 20.0 
-                #  if alphaa[it-1] < 0.65
-                    #  alphaa[it] = 0.6
-                    #  dam = 0.6
-                #  else
-                    alphaa[it] = 0.90*alphaa[it-1]
-                    dam = alphaa[it]
-                #  end
+            if output.tEnd[it_e] - output.tStart[it_s] > 2.0 
+                alphaa[it] = 0.90*alphaa[it-1]
+                dam = alphaa[it]
                 
-                #  alphaa[it] = betaa[it_e]*alphaa[it-1]
-                #  dam = alphaa[it]
-                #  dam = 0.97^(it_e)
-                #  tStart = output.time_[it]
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]
-                    #  Korig[id] = alphaa[it]*Korig[id]
                 end
 
                 # Linear solver stuff
@@ -466,9 +456,9 @@ function main(P)
                 ml = ruge_stuben(kni)
                 p = aspreconditioner(ml)
 
+                println("alphaa = ", alphaa[it])
             end
             
-            println("alphaa = ", alphaa[it])
 
             #  co = αD(t, tStart, co)
             #  println(isolver)
