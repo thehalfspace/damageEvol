@@ -63,7 +63,7 @@
  #  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/final02.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/test02.jld2", "w")
 
 # Healing parameter
 function αD(t, tStart, dam)
@@ -71,17 +71,6 @@ function αD(t, tStart, dam)
     # First working version of healing
     aa = 0.10*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) +dam
     
-    # Testing stuff
-    #  a = 0.065; b = 1000; c = -0.025
-    #  aa = a*(log10(b*(t-tStart)/P[1].yr2sec + 0.01)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + c + dam
-    #  aa = 1
-
-    #  if aa < 0.899
-        #  #  if aa == 0.90
-            #  #  return aa
-        #  #  else
-            #  return 1.0
-        #  #  end
     if aa > 1.0
         return 1.0
     elseif aa < 0.6
@@ -453,22 +442,22 @@ function main(P)
             #  alphaa[it] = 0.90*alphaa[it-1]
             #  dam = alphaa[it]
             if output.tEnd[it_e] - output.tStart[it_s] > 20.0 
-                if alphaa[it-1] < 0.65
-                    alphaa[it] = 0.6
-                    dam = 0.6
-                else
+                #  if alphaa[it-1] < 0.65
+                    #  alphaa[it] = 0.6
+                    #  dam = 0.6
+                #  else
                     alphaa[it] = 0.90*alphaa[it-1]
                     dam = alphaa[it]
-                end
+                #  end
                 
                 #  alphaa[it] = betaa[it_e]*alphaa[it-1]
                 #  dam = alphaa[it]
                 #  dam = 0.97^(it_e)
                 #  tStart = output.time_[it]
-                    for id in did
-                        Ksparse[id] = alphaa[it]*Korig[id]
-                        #  Korig[id] = alphaa[it]*Korig[id]
-                    end
+                for id in did
+                    Ksparse[id] = alphaa[it]*Korig[id]
+                    #  Korig[id] = alphaa[it]*Korig[id]
+                end
 
                 # Linear solver stuff
                 kni = -Ksparse[P[4].FltNI, P[4].FltNI]
@@ -476,8 +465,6 @@ function main(P)
                 # multigrid
                 ml = ruge_stuben(kni)
                 p = aspreconditioner(ml)
-            else
-                alphaa[it] = alphaa[it-1]
 
             end
             
