@@ -63,7 +63,7 @@
  #  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/test02.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/final03.jld2", "w")
 
 # Healing parameter
 function αD(t, tStart, dam)
@@ -434,8 +434,14 @@ function main(P)
             #  alphaa[it] = 0.90*alphaa[it-1]
             #  dam = alphaa[it]
             #  if output.tEnd[it_e] - output.tStart[it_s] > 2.0 
+
                 alphaa[it] = 0.90*alphaa[it-1]
                 dam = alphaa[it]
+
+                if dam <= 0.65
+                    alphaa[it] = 0.65
+                    dam = 0.65
+                end
 
                 tStart = output.time_[it]
                 
