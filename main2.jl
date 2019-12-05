@@ -63,13 +63,13 @@
  #  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/final03.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/alpha_70.jld2", "w")
 
 # Healing parameter
 function αD(t, tStart, dam)
 
     # First working version of healing
-    aa = 0.10*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + dam
+    aa = 0.12*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + dam
     
     if aa > 1.0
         return 1.0
@@ -431,11 +431,12 @@ function main(P)
             slipstart = 0
             
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
-            #  alphaa[it] = 0.90*alphaa[it-1]
-            #  dam = alphaa[it]
-            #  if output.tEnd[it_e] - output.tStart[it_s] > 2.0 
 
-                alphaa[it] = 0.90*alphaa[it-1]
+                # Original stuff
+                #  alphaa[it] = 0.90*alphaa[it-1]
+                #  dam = alphaa[it]
+                
+                alphaa[it] = 0.70
                 dam = alphaa[it]
 
                 if dam <= 0.65

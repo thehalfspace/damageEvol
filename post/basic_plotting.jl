@@ -15,7 +15,7 @@ using StatsBase
 
 #  gr()    # backend for python based pyplot: good for quick viewing
 
-#   Plots.scalefontsizes(1.5)
+#   Plots.scalefontsizes(2)
 pyplot()
 
 #-------------------------------
@@ -23,7 +23,7 @@ pyplot()
 #-------------------------------
 function plot_friction(cca, ccb, Seff, tauo, FltX)
 
-    plt = plot(framestyle=[:box :grid],fontfamily=font(18, "Helvetica"), dpi=200)
+    plt = plot(framestyle=[:box :grid],fontfamily=font(28, "Helvetica"), dpi=200)
 
     plot!(Seff/1e6, -FltX/1e3, axis=:bottom, label=:"Normal Stress", legend=:bottomright, lw = 2)
     plot!(tauo/1e6, -FltX/1e3, axis=:bottom, label=:"Shear Stress", lw = 2)
@@ -61,7 +61,7 @@ function plot_cumulative_slip(delfsec, delf5yr, FltX)
     plot!(delfsec2, -FltX[indx:end]/1e3, lc=:peru, label=:"", lw=0.5)
 
     xaxis!(L"Accumulated\ Slip\ (m)"); #xlims!(10,30); #xticks!(-1:0.2:1)
-    yaxis!(L"Depth\ (km)", yflip=true); ylims!(0,24); #yticks!(0:0.1:1)
+    yaxis!(L"Depth\ (km)", yflip=true); ylims!(0,20); #yticks!(0:0.1:1)
     #  savefig(string(path, "cumulative_slip.svg"))
     savefig(string(path, "cumulative_slip.pdf"))
 
@@ -73,7 +73,7 @@ function plot_Vfmax(Vfmax, time_)
         Vfmax: peak slip rate on-fault
         time_: time in years"""
 
-    plt = plot(framestyle=[:box], grid=false, dpi=200)
+    plt = plot(framestyle=[:box], grid=false,fontfamily=font(28, "Helvetica"), dpi=200)
 
     plot!(time_, Vfmax, lc=:darkblue, label=:"",lw=1.5)
 
@@ -92,7 +92,7 @@ function plot_Mw(Mw)
 
     # Cumulative
     cum = cumsum(hist.weights[end:-1:1])[end:-1:1]
-    plt = plot(framestyle=[:box :grid], dpi=200)
+    plt = plot(framestyle=[:box :grid],fontfamily=font(28, "Helvetica"), dpi=200)
 
     scatter!(hist.edges[1][1:end-1], cum, ms=5, label=:"") #, label="Cumulative")
 
