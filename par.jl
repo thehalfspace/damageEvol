@@ -42,7 +42,7 @@ function setParameters(FZdepth, res)
 
     yr2sec::Int = 365*24*60*60
 
-    Total_time::Int = 500*yr2sec     # Set the total time for simulation here
+    Total_time::Int = 800*yr2sec     # Set the total time for simulation here
     #  Total_time::Int = 930*yr2sec     # Set the total time for simulation here
 
     CFL::Float64 = 0.6	#	Courant stability number
@@ -52,7 +52,7 @@ function setParameters(FZdepth, res)
     # Some other time variables used in the loop
     dtincf::Float64 = 1.2
     gamma_::Float64 = pi/4
-    dtmax::Int = 700 * 24 * 60*60		# 50 days
+    dtmax::Int = 100 * 24 * 60*60		# 100 days
 
 
     #...................
@@ -74,7 +74,7 @@ function setParameters(FZdepth, res)
 
     # Low velocity layer dimensions
     ThickX::Float64 = LX - ceil(FZdepth/dxe)*dxe # ~FZdepth m deep
-    ThickY::Float64 = ceil(2.0e3/dye)*dye   # ~ 0.25*2 km wide
+    ThickY::Float64 = ceil(0.5e3/dye)*dye   # ~ 0.25*2 km wide
 
     # Damage multiplier
     #  α =
@@ -228,6 +228,7 @@ function setParameters(FZdepth, res)
     # Display important parameters
     println("Total number of nodes on fault: ", FltNglob)
     println("Average node spacing: ", LX/(FltNglob-1), " m")
+    println("ThickY: ", ThickY, " m")
     @printf("dt: %1.09f s\n", dt)
 
 

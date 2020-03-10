@@ -55,7 +55,7 @@ function plot_cumulative_slip(delfsec, delf5yr, FltX)
     indx = findall(abs.(FltX) .<= 18e3)[1]
     delfsec2 = delfsec[indx:end, :]
 
-    plt = plot(framestyle=[:box],grid=false, dpi=200)
+    plt = plot(framestyle=[:box],grid=false, size=(600,300), dpi=300)
 
     plot!(delf5yr, -FltX/1e3, lc=:steelblue,label=:"", lw=0.5)
     plot!(delfsec2, -FltX[indx:end]/1e3, lc=:peru, label=:"", lw=0.5)
@@ -63,7 +63,7 @@ function plot_cumulative_slip(delfsec, delf5yr, FltX)
     xaxis!(L"Accumulated\ Slip\ (m)"); #xlims!(10,30); #xticks!(-1:0.2:1)
     yaxis!(L"Depth\ (km)", yflip=true); ylims!(0,20); #yticks!(0:0.1:1)
     #  savefig(string(path, "cumulative_slip.svg"))
-    savefig(string(path, "cumulative_slip.pdf"))
+    savefig(string(path, "cumulative_slip.png"))
 
     plt
 end
@@ -73,15 +73,15 @@ function plot_Vfmax(Vfmax, time_)
         Vfmax: peak slip rate on-fault
         time_: time in years"""
 
-    plt = plot(framestyle=[:box], grid=false,fontfamily=font(28, "Helvetica"), dpi=200)
+    plt = plot(framestyle=[:box], grid=false,dpi=200)
 
-    plot!(time_, Vfmax, lc=:darkblue, label=:"",lw=1.5)
+    plot!(time_, Vfmax, lc=:steelblue, label=:"",lw=1.5)
 
     xaxis!(L"Time\ (yr)") #xminorgrid=true
     #  xticks!(0:100:maximum(time_));
     yaxis!(L"Peak\ slip\ rate\ on\ fault\ (m/s)", yscale=:log)
     #  savefig(string(path, "Vfmax.svg"))
-    savefig(string(path, "Vfmax.pdf"))
+    savefig(string(path, "Vfmax.png"))
 
     plt
 end
@@ -103,6 +103,21 @@ function plot_Mw(Mw)
     savefig(string(path, "MwPlot.pdf"))
 
     plt
+end
+
+function plot_alphaa(alphaa, time_)
+    plt = plot(framestyle=[:box], grid=false, size=(600,300),dpi=300)
+
+    plot!(time_[alphaa .< 1.0], alphaa[alphaa .<1.0], lc=:darkblue, label=:"",lw=1.5)
+
+    xaxis!(L"Time\ (yr)") #xminorgrid=true
+    #  xticks!(0:100:maximum(time_));
+    yaxis!(L"\alpha_D")
+    #  savefig(string(path, "Vfmax.svg"))
+    savefig(string(path, "alpha.png"))
+
+    plt
+
 end
 
 function plot_stress_evolution(seismic_stress, FltX, rupture_time)

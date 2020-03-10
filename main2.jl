@@ -13,27 +13,7 @@
 #   CHANGELOG:
 #       * 06-15-2019: Assemble stiffness as sparse matrix
 #       * 04-20-2019: Implement multithreading for element calculations
-#       * 02-19-2019: Remove all the shared array stuff
-#       * 10-24-2018: Correct the free surface boundary condition
-#       * 08-27-2018: Remove the dependency on Parameters.jl
-#       * 08-26-2018: Using distributed for loop in PCG and NRsearch
-#       * 08-24-2018: Create a separate function for NRsearch loop: FBC()
-#       * 08-20-2018: Use JLD2 to store data instead of JLD
-#       * 08-14-2018: Modify script to automatically make plots directory
-#                     and save.
-#
-#       (Old stuff: I don't remember the dates (08/2017-08/2018))
-#       * Change functions to adapt Julia 1.0 changes
-#       * Move the cumulative slip calculation outside the time loop
-#       * Add scripts to compute the earthquake magnitude
-#       * Add plots script for various plotting functions
-#       * Implemented elastic halfspace
-#       * Setup for a shallow fault zone
-#       * Organize everything into structs and functions
-#       * Interpolation for initial stress and friction in halfspace
-#       * Add separate files for parameters, initial conditions, functions
 ###############################################################################
-#  include("$(@__DIR__)/damageEvol.jl")	    #	Set Parameters
 
  # Threaded matrix multiplication
  #  import Base: eltype, size
@@ -63,13 +43,30 @@
  #  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/alpha_70.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/exp03.jld2", "w")
+
+
+# Healing exponential function
+function healing2(t,tStart,dam)
+    """ hmax: the max amount of healing
+        r: healing rate (0.05 => 80 years to heal completely)
+                        (0.8 => 8 years to heal completely)
+    """
+    hmax = 0.1
+    r = 1.0
+
+    hmax*(1 .- exp.(-r*(t .- tStart)/P[1].yr2sec)) .+ dam
+end
+
 
 # Healing parameter
 function αD(t, tStart, dam)
 
     # First working version of healing
-    aa = 0.12*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + dam
+    #  aa = 0.12*(log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + dam
+    #  aa = 0.12*(0.5*log10((t-tStart)/P[1].yr2sec + 1.0)/log10(1.0e3 - (t-tStart)/P[1].yr2sec)) + dam
+
+    # Healing 2: exponential functio;
     
     if aa > 1.0
         return 1.0
@@ -173,9 +170,9 @@ function main(P)
     #  hypo, time_, Vfmax
     nseis = length(P[4].out_seis)
 
-    output = results(zeros(P[1].FltNglob, 50000), zeros(P[1].FltNglob, 50000),
-                     zeros(P[1].FltNglob, 50000),
-                     zeros(50000),
+    output = results(zeros(P[1].FltNglob, 60000), zeros(P[1].FltNglob, 60000),
+                     zeros(P[1].FltNglob, 60000),
+                     zeros(60000),
                      zeros(P[1].FltNglob, 4000), zeros(P[1].FltNglob, 4000),
                      zeros(P[1].FltNglob, 4000),
                      zeros(80000,nseis), zeros(80000,nseis), zeros(80000,nseis),
@@ -185,10 +182,10 @@ function main(P)
                      zeros(700000))
 
     # Save output variables at certain timesteps: define those timesteps
-    tvsx::Float64 = 2*P[1].yr2sec  # 2 years for interseismic period
+    tvsx::Float64 = 1*P[1].yr2sec  # 2 years for interseismic period
     tvsxinc::Float64 = tvsx
 
-    tevneinc::Float64 = 0.5    # 0.5 second for seismic period
+    tevneinc::Float64 = 0.1    # 0.1 second for seismic period
     delfref = zeros(P[1].FltNglob)
 
     # Iterators
@@ -225,7 +222,7 @@ function main(P)
     p = aspreconditioner(ml)
     tmp = copy(a)
 
-    alphaa = ones(700000)
+    alphaa = 0.6*ones(700000)
 
     # faster matrix multiplication
     #   Ksparse = Ksparse'
@@ -241,7 +238,7 @@ function main(P)
 
     # Damage evolution stuff
     did = P[10]
-    dam = 1.0
+    dam = alphaa[1]
 
     tStart = dt
 
@@ -326,8 +323,9 @@ function main(P)
 
 
             # Healing stuff
-            if it > 10 #&& t/P[1].yr2sec > 10
-                alphaa[it] = αD(t, tStart, dam)
+            if it > 3 #&& t/P[1].yr2sec > 10
+                alphaa[it] = healing2(t, tStart, dam)
+                #  alphaa[it] = αD(t, tStart, dam)
             
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]
@@ -436,12 +434,12 @@ function main(P)
                 #  alphaa[it] = 0.90*alphaa[it-1]
                 #  dam = alphaa[it]
                 
-                alphaa[it] = 0.70
+                alphaa[it] = 0.60
                 dam = alphaa[it]
 
-                if dam <= 0.65
-                    alphaa[it] = 0.65
-                    dam = 0.65
+                if dam < 0.60
+                    alphaa[it] = 0.60
+                    dam = 0.60
                 end
 
                 tStart = output.time_[it]
@@ -514,9 +512,10 @@ function main(P)
             #  println("Vfmax = ", maximum(current_sliprate))
         end
 
+        #  @printf("\n Alpha = %1.5g\n", alphaa[it])
 
         # output variables at prescribed locations every 10 timesteps
-        if mod(it,10) == 0
+        if mod(it,1000) == 0
             rit += 1
             output.dSeis[rit,:] = d[P[4].out_seis]
             output.vSeis[rit,:] = v[P[4].out_seis]

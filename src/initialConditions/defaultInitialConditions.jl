@@ -16,7 +16,7 @@ function fricDepth(FltX)
 
     a_b = cca - ccb
     fP1 = [0.012, 0e3]
-    #  fP1 = [0, -1.2e3]
+    #  fP1 = [-0.0041, 0e3]
     fP2 = [-0.0041, -2e3]
     fP3 = [-0.0041, -12e3]
     fP4 = [0.015, -17e3]
