@@ -1,13 +1,10 @@
 # Material properties for a narrow rectangular damaged zone of half-thickness ThickY and depth ThickX 
-function material_properties(NelX, NelY,NGLL, dxe, dye, ThickX, ThickY, wgll2, rho1, vs1, alpha, isolver)
+function material_properties(NelX, NelY,NGLL, dxe, dye, ThickX, ThickY, wgll2, rho1, vs1, rho2, vs2)
     mu::Matrix{Float64} = zeros(NGLL, NGLL)
     W::Array{Float64,3} = zeros(NGLL, NGLL, NelX*NelY)
-
-    #  if isolver == 1
-        #  s = 1
-    #  elseif isolver == 2
-        #  s = -1
-    #  end
+    
+    # damage zone index
+    #  damage_idx = zeros(Int, NelX*NelY)
     
     @inbounds for ey in 1:NelY
         @inbounds for ex in 1:NelX
@@ -15,7 +12,8 @@ function material_properties(NelX, NelY,NGLL, dxe, dye, ThickX, ThickY, wgll2, r
             
             # Properties of heterogeneous medium
             if ex*dxe >= ThickX && (dye <= ey*dye <= ThickY)
-                mu .= rho1*(vs1*alpha)^2
+                mu .= rho2*vs2^2
+                #  damage_idx[eo] = eo
             else
                 mu .= rho1*vs1^2
             end

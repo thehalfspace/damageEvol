@@ -42,7 +42,7 @@ function setParameters(FZdepth, res)
 
     yr2sec::Int = 365*24*60*60
 
-    Total_time::Int = 800*yr2sec     # Set the total time for simulation here
+    Total_time::Int = 500*yr2sec     # Set the total time for simulation here
     #  Total_time::Int = 930*yr2sec     # Set the total time for simulation here
 
     CFL::Float64 = 0.6	#	Courant stability number
@@ -52,7 +52,7 @@ function setParameters(FZdepth, res)
     # Some other time variables used in the loop
     dtincf::Float64 = 1.2
     gamma_::Float64 = pi/4
-    dtmax::Int = 100 * 24 * 60*60		# 100 days
+    dtmax::Int = 400 * 24 * 60*60		# 100 days
 
 
     #...................
@@ -67,14 +67,14 @@ function setParameters(FZdepth, res)
     #  rho1::Float64 = 2500
     #  vs1::Float64 = 0.6*3464
 
-    rho2::Float64 = 2500
-    vs2::Float64 = 0.99*vs1
+    rho2::Float64 = 2670
+    vs2::Float64 = 1.00*vs1
 
     ETA = 0.
 
     # Low velocity layer dimensions
     ThickX::Float64 = LX - ceil(FZdepth/dxe)*dxe # ~FZdepth m deep
-    ThickY::Float64 = ceil(0.5e3/dye)*dye   # ~ 0.25*2 km wide
+    ThickY::Float64 = ceil(2.0e3/dye)*dye   # ~ 0.25*2 km wide
 
     # Damage multiplier
     #  α =
@@ -141,12 +141,12 @@ function setParameters(FZdepth, res)
     #  MC::Vector{Float64} = zeros(nglob)
 
     # Assemble mass and stiffness matrix
-    M, dt::Float64, muMax, damage_idx = Massemble!(NGLL, NelX, NelY, dxe, dye,
+    M, dt::Float64, muMax = Massemble!(NGLL, NelX, NelY, dxe, dye,
                         ThickX,ThickY, rho1, vs1, rho2, vs2, iglob,M, x, y, jac)
 
     # Material properties for a narrow rectangular damaged zone of
     # half-thickness ThickY and depth ThickX
-    W = material_properties(NelX, NelY,NGLL,dxe, dye, ThickX, ThickY, wgll2, rho1, vs1, 1, 1)
+    W = material_properties(NelX, NelY,NGLL,dxe, dye, ThickX, ThickY, wgll2, rho1, vs1, rho2, vs2)
 
     # Material properties for trapezoid damaged zone
     #  M, W =  mat_trap(NelX, NelY,NGLL, iglob, M, dxe, dye, x,y, wgll2)

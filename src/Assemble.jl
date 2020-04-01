@@ -21,8 +21,8 @@ function Massemble!(NGLL, NelX, NelY, dxe, dye, ThickX,
     muMax = 0
     dt = Inf
     
-    # damage zone index
-    damage_idx = zeros(Int, NelX*NelY)
+    #  # damage zone index
+    #  damage_idx = zeros(Int, NelX*NelY)
 
     @inbounds @fastmath for ey = 1:NelY
         @inbounds @fastmath for ex = 1:NelX
@@ -32,7 +32,7 @@ function Massemble!(NGLL, NelX, NelY, dxe, dye, ThickX,
 
             # Properties of heterogeneous medium
             if ex*dxe >= ThickX && (dye <= ey*dye <= ThickY)
-                damage_idx[eo] = eo
+                #  damage_idx[eo] = eo
                 rho[:,:] .= rho2
                 mu[:,:] .= rho2*vs2^2
             else
@@ -67,5 +67,5 @@ function Massemble!(NGLL, NelX, NelY, dxe, dye, ThickX,
         end
     end
 
-    return M,dt, muMax, damage_idx[damage_idx .> 0]
+    return M,dt, muMax 
 end

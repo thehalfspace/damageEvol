@@ -17,7 +17,7 @@ function fricDepth(FltX)
     a_b = cca - ccb
     fP1 = [0.012, 0e3]
     #  fP1 = [-0.0041, 0e3]
-    fP2 = [-0.0041, -2e3]
+    fP2 = [-0.0041, -0.5e3]
     fP3 = [-0.0041, -12e3]
     fP4 = [0.015, -17e3]
     fP5 = [0.024, -24e3]
@@ -50,7 +50,7 @@ function SeffDepth(FltX)
 
     Seff::Array{Float64} = repeat([50e6], FltNglob)
     sP1 = [10e6 0]
-    sP2 = [50e6 -2e3]
+    sP2 = [50e6 -0.5e3]
     Seff_depth = findall(abs.(FltX) .<= abs(sP2[2]))
     Seff[Seff_depth] = Int1D(sP1, sP2, FltX[Seff_depth])
 
@@ -65,7 +65,7 @@ function tauDepth(FltX)
 
     tauo::Array{Float64} = repeat([22.5e6], FltNglob)
     tP1 = [0.01e6 0]
-    tP2 = [30e6 -2e3]
+    tP2 = [30e6 -0.5e3]
     tP3 = [30e6 -12e3]
     tP4 = [22.5e6 -17e3]
     tP5 = [22.5e6 -24e3]

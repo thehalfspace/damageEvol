@@ -43,7 +43,7 @@
  #  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/exp03.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/vw_region02.jld2", "w")
 
 
 # Healing exponential function
@@ -52,8 +52,8 @@ function healing2(t,tStart,dam)
         r: healing rate (0.05 => 80 years to heal completely)
                         (0.8 => 8 years to heal completely)
     """
-    hmax = 0.1
-    r = 1.0
+    hmax = 0.2
+    r = 0.1    # 0.05 (debug05)
 
     hmax*(1 .- exp.(-r*(t .- tStart)/P[1].yr2sec)) .+ dam
 end
@@ -182,7 +182,7 @@ function main(P)
                      zeros(700000))
 
     # Save output variables at certain timesteps: define those timesteps
-    tvsx::Float64 = 1*P[1].yr2sec  # 2 years for interseismic period
+    tvsx::Float64 = 2*P[1].yr2sec  # 2 years for interseismic period
     tvsxinc::Float64 = tvsx
 
     tevneinc::Float64 = 0.1    # 0.1 second for seismic period
@@ -240,7 +240,7 @@ function main(P)
     did = P[10]
     dam = alphaa[1]
 
-    tStart = dt
+    tStart2 = dt
 
 
     #....................
@@ -324,8 +324,8 @@ function main(P)
 
             # Healing stuff
             if it > 3 #&& t/P[1].yr2sec > 10
-                alphaa[it] = healing2(t, tStart, dam)
-                #  alphaa[it] = αD(t, tStart, dam)
+                alphaa[it] = healing2(t, tStart2, dam)
+                #  alphaa[it] = αD(t, tStart2, dam)
             
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]
@@ -434,15 +434,15 @@ function main(P)
                 #  alphaa[it] = 0.90*alphaa[it-1]
                 #  dam = alphaa[it]
                 
-                alphaa[it] = 0.60
+                alphaa[it] = 0.4
                 dam = alphaa[it]
 
-                if dam < 0.60
-                    alphaa[it] = 0.60
-                    dam = 0.60
-                end
+                #  if dam < 0.80
+                    #  alphaa[it] = 0.80
+                    #  dam = 0.80
+                #  end
 
-                tStart = output.time_[it]
+                tStart2 = output.time_[it]
                 
                 for id in did
                     Ksparse[id] = alphaa[it]*Korig[id]

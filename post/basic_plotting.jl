@@ -75,13 +75,12 @@ function plot_Vfmax(Vfmax, time_)
 
     plt = plot(framestyle=[:box], grid=false,dpi=200)
 
-    plot!(time_, Vfmax, lc=:steelblue, label=:"",lw=1.5)
+    plot!(time_, log10.(Vfmax), lc=:steelblue, label=:"",lw=1.5)
 
-    xaxis!(L"Time\ (yr)") #xminorgrid=true
-    #  xticks!(0:100:maximum(time_));
-    yaxis!(L"Peak\ slip\ rate\ on\ fault\ (m/s)", yscale=:log)
+    xaxis!(L"Time\ (yr)") 
+    yaxis!(L"Peak\ slip\ rate\ on\ fault\ (m/s)")
     #  savefig(string(path, "Vfmax.svg"))
-    savefig(string(path, "Vfmax.png"))
+    savefig(string(path, "Vfmax_02.png"))
 
     plt
 end
@@ -114,7 +113,7 @@ function plot_alphaa(alphaa, time_)
     #  xticks!(0:100:maximum(time_));
     yaxis!(L"\alpha_D")
     #  savefig(string(path, "Vfmax.svg"))
-    savefig(string(path, "alpha.png"))
+    savefig(string(path, "alpha_02.png"))
 
     plt
 
