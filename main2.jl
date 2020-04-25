@@ -43,17 +43,17 @@
  #  size(M::ThreadedMul, I...) = size(M.A, I...)
 
 # Save output to file dynamically not
-file  = jldopen("$(@__DIR__)/data/vw_region02.jld2", "w")
+file  = jldopen("$(@__DIR__)/data/coseismic_amplitude_05.jld2", "w")
 
 
 # Healing exponential function
 function healing2(t,tStart,dam)
-    """ hmax: the max amount of healing
+    """ hmax: coseismic damage amplitude
         r: healing rate (0.05 => 80 years to heal completely)
                         (0.8 => 8 years to heal completely)
     """
-    hmax = 0.2
-    r = 0.1    # 0.05 (debug05)
+    hmax = 0.05
+    r = 0.5    # 0.05 (debug05)
 
     hmax*(1 .- exp.(-r*(t .- tStart)/P[1].yr2sec)) .+ dam
 end
@@ -170,12 +170,12 @@ function main(P)
     #  hypo, time_, Vfmax
     nseis = length(P[4].out_seis)
 
-    output = results(zeros(P[1].FltNglob, 60000), zeros(P[1].FltNglob, 60000),
-                     zeros(P[1].FltNglob, 60000),
-                     zeros(60000),
+    output = results(zeros(P[1].FltNglob, 120000), zeros(P[1].FltNglob, 120000),
+                     zeros(P[1].FltNglob, 120000),
+                     zeros(6),
                      zeros(P[1].FltNglob, 4000), zeros(P[1].FltNglob, 4000),
                      zeros(P[1].FltNglob, 4000),
-                     zeros(80000,nseis), zeros(80000,nseis), zeros(80000,nseis),
+                     zeros(700000), zeros(80,nseis), zeros(80,nseis),
                      zeros(600), zeros(600),
                      zeros(P[1].FltNglob, 600), zeros(P[1].FltNglob, 600),
                      zeros(P[1].FltNglob, 600), zeros(600), zeros(700000),
@@ -185,7 +185,7 @@ function main(P)
     tvsx::Float64 = 2*P[1].yr2sec  # 2 years for interseismic period
     tvsxinc::Float64 = tvsx
 
-    tevneinc::Float64 = 0.1    # 0.1 second for seismic period
+    tevneinc::Float64 = 0.05    # 0.1 second for seismic period
     delfref = zeros(P[1].FltNglob)
 
     # Iterators
@@ -434,7 +434,7 @@ function main(P)
                 #  alphaa[it] = 0.90*alphaa[it-1]
                 #  dam = alphaa[it]
                 
-                alphaa[it] = 0.4
+                alphaa[it] = 0.6
                 dam = alphaa[it]
 
                 #  if dam < 0.80
@@ -470,7 +470,6 @@ function main(P)
             output.is_slip[:,ntvsx] = 2*d[P[4].iFlt] .+ P[2].Vpl*t
             output.is_slipvel[:,ntvsx] = 2*v[P[4].iFlt] .+ P[2].Vpl
             output.is_stress[:,ntvsx] = (tau + P[3].tauo)./1e6
-            output.index_eq[idd] = 1
 
             tvsx = tvsx + tvsxinc
         end
@@ -486,7 +485,6 @@ function main(P)
                 output.seismic_slip[:,nevne] = 2*d[P[4].iFlt] .+ P[2].Vpl*t
                 output.seismic_slipvel[:,nevne] = 2*v[P[4].iFlt] .+ P[2].Vpl
                 output.seismic_stress[:,nevne] = (tau + P[3].tauo)./1e6
-                output.index_eq[idd] = 2
             end
 
             if idelevne == 1 && (t - tevneb) > tevne
@@ -496,7 +494,6 @@ function main(P)
                 output.seismic_slip[:,nevne] = 2*d[P[4].iFlt] .+ P[2].Vpl*t
                 output.seismic_slipvel[:,nevne] = 2*v[P[4].iFlt] .+ P[2].Vpl
                 output.seismic_stress[:,nevne] = (tau + P[3].tauo)./1e6
-                output.index_eq[idd] = 2
                 tevne = tevne + tevneinc
             end
 
@@ -514,13 +511,13 @@ function main(P)
 
         #  @printf("\n Alpha = %1.5g\n", alphaa[it])
 
-        # output variables at prescribed locations every 10 timesteps
-        if mod(it,1000) == 0
-            rit += 1
-            output.dSeis[rit,:] = d[P[4].out_seis]
-            output.vSeis[rit,:] = v[P[4].out_seis]
-            output.aSeis[rit,:] = a[P[4].out_seis]
-        end
+        # output variables at free surface locations every 10 timesteps
+        #if mod(it,1) == 0
+            #rit += 1
+            output.dSeis[it] = d[P[4].iFlt][end]
+            #output.vSeis[rit,:] = v[P[4].out_seis]
+            #output.aSeis[rit,:] = a[P[4].out_seis]
+        #end
 
         # Determine quasi-static or dynamic regime based on max-slip velocity
         #  if isolver == 1 && Vfmax < 5e-3 || isolver == 2 && Vfmax < 2e-3
@@ -541,13 +538,12 @@ function main(P)
     output.seismic_stress   = output.seismic_stress[:,1:nevne]
     output.seismic_slipvel  = output.seismic_slipvel[:,1:nevne]
     output.seismic_slip     = output.seismic_slip[:,1:nevne]
-    output.index_eq         = output.index_eq[1:idd]
     output.is_stress        = output.is_stress[:,1:ntvsx]
     output.is_slipvel       = output.is_slipvel[:,1:ntvsx]
     output.is_slip          = output.is_slip[:,1:ntvsx]
     output.dSeis            = output.dSeis[1:rit,:]
-    output.vSeis            = output.vSeis[1:rit,:]
-    output.aSeis            = output.aSeis[1:rit,:]
+    #output.vSeis            = output.vSeis[1:rit,:]
+    #output.aSeis            = output.aSeis[1:rit,:]
     output.tStart           = output.tStart[1:it_s]
     output.tEnd             = output.tEnd[1:it_e]
     output.taubefore        = output.taubefore[:,1:it_s]
@@ -579,7 +575,7 @@ mutable struct results
     is_stress::Matrix{Float64}
     is_slipvel::Matrix{Float64}
     is_slip::Matrix{Float64}
-    dSeis::Matrix{Float64}
+    dSeis::Array{Float64}
     vSeis::Matrix{Float64}
     aSeis::Matrix{Float64}
     tStart::Vector{Float64}

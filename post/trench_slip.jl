@@ -13,17 +13,37 @@ function plot_trench_slip(delfsec, delf5yr, FltX)
         FltX: Location of nodes on the fault"""
 
 
-    plt = plot(framestyle=[:box],grid=false, size=(600,300), dpi=300)
+    # Depth valeus
+    d0 = findall(abs.(FltX) .< 1)[1]
+    d1 = findall(abs.(FltX) .< 150)[1]
+    d2 = findall(abs.(FltX) .< 300)[1]
+    d3 = findall(abs.(FltX) .< 500)[1]
+    d4 = findall(abs.(FltX) .< 1000)[1]
+    d5 = findall(abs.(FltX) .< 5000)[1]
+    d6 = findall(abs.(FltX) .< 10000)[1]
 
-    plot!(delfsec[end-0,:], lc=:peru, label=:"0 m depth", lw=2)
-    plot!(delfsec[end-5,:], lc=:steelblue, label=:"160 m depth", lw=2)
-    plot!(delfsec[end-10,:], lc=:green, label=:"320 m depth", lw=2)
-    plot!(delfsec[end-20,:], lc=:black, label=:"640 m depth", lw=2)
-    plot!(delfsec[1001,:], lc=:crimson, label=:"8 km depth", lw=2)
-    plot!(delfsec[951,:], lc=:deepskyblue, label=:"10 km depth", lw=2)
+    fig = PyPlot.figure(figsize=(8,6), dpi = 300)
+    ax = fig.add_subplot(111)
+    
+    plt.rc("font",size=12)
+    ax.plot(delfsec[d0,:], label=:"0 m depth", lw=2)
+    ax.plot(delfsec[d1,:], label=:"150 m depth", lw=2)
+    #  ax.plot(delfsec[d2,:], label=:"300 m depth", lw=2)
+    #  ax.plot(delfsec[d3,:], label=:"500 m depth", lw=2)
+    #  ax.plot(delfsec[d4,:], label=:"1 km depth", lw=2)
+    ax.plot(delfsec[d5,:], label=:"5 km depth", lw=2)
+    ax.plot(delfsec[d6,:], label=:"10 km depth", lw=2)
 
-    xaxis!(L"Timestep"); #xlims!(10,30); #xticks!(-1:0.2:1)
-    yaxis!(L"Accumulated Slip\ (m)"); #yticks!(0:0.1:1)
-    savefig(string(path, "trench_slip.png"))
-    plt
+    ax.set_xlabel("Timestep")
+    ax.set_ylabel("Seismic Slip")
+    ax.get_yaxis().set_tick_params(which="both", direction="in")
+    ax.get_xaxis().set_tick_params(which="both", direction="in")
+    #  plt.rc("grid", linestyle="--", color="black", alpha=0.5)
+    #  plt.grid("True")
+    plt.legend()
+    
+    show()
+
+    figname = string(path, "trench_slip.png")
+    fig.savefig(figname, dpi = 300)
 end
