@@ -84,6 +84,7 @@ function moment_magnitude_new(mu, P3, FltX, delfafter, stressdrops ,time_)
 
     iter = length(delfafter[1,:])
     seismic_moment = zeros(iter)
+    rupture_len = zeros(iter)
     fault_slip = zeros(iter)
     temp_sigma = 0
     iter2 = 1 
@@ -116,12 +117,14 @@ function moment_magnitude_new(mu, P3, FltX, delfafter, stressdrops ,time_)
         del_sigma[i] = temp_sigma/zdim
         fault_slip[i] = temp_slip/zdim
 
+        rupture_len[i] = zdim
+
 
     end
     #  seismic_moment = filter!(x->x!=0, seismic_moment)
     #  del_sigma = filter!(x->x!=0, del_sigma)
     Mw = (2/3)*log10.(seismic_moment.*1e7) .- 10.7
 
-    return Mw, del_sigma, fault_slip
+    return Mw, del_sigma, fault_slip, rupture_len
 end
 

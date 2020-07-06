@@ -4,13 +4,15 @@ include("output.jl")
 
 include("post/earthquake_cycles.jl")
 #  include("post/basic_plotting.jl")
-include("post/py_plot.jl")
+#  include("post/py_plot.jl")
 #  include("post/cumulative_slip.jl")
 
 # path to save files
-global path = "$(@__DIR__)/plots/vw_region01/"
+global path = "$(@__DIR__)/plots/vw_test08/"
+#  global path = "$(@__DIR__)/plots/par_study/A20_H01_P0/"
 
-file = jldopen("$(@__DIR__)/data/vw_region01.jld2", "r")
+file = jldopen("$(@__DIR__)/data/vw_test/vw_test_08.jld2", "r")
+#  file = jldopen("$(@__DIR__)/data/par_study/A20_H01_P0.jld2", "r")
 
 O = file["O"]
 seismic_stress = O.seismic_stress  
@@ -49,7 +51,7 @@ rho2 = 2500
 vs2 = 0.6*vs1
 mu = rho2*vs2^2
 
-Mw, del_sigma, fault_slip = moment_magnitude_new(mu, P1, P3.FltX, delfafter, stressdrops, time_);
+Mw, del_sigma, fault_slip, rupture_len = moment_magnitude_new(mu, P1, P3.FltX, delfafter, stressdrops, time_);
 
 
 # Temporary
