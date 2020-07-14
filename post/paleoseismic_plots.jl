@@ -83,6 +83,35 @@ function slipPlot(delfafter2, rupture_len, FltX, Mw, tStart)
     fig.savefig(figname, dpi = 300)
 end
 
+# Cumulative sliprate plot
+function eqCyclePlot(sliprate, FltX)
+    indx = findall(abs.(FltX) .<= 16e3)[1]
+    value = sliprate[indx:end,10000:end]
+    
+    depth = -FltX[indx:end]./1e3
+
+    plot_params()
+    fig = PyPlot.figure(figsize=(9.2, 4.45))
+    ax = fig.add_subplot(111)
+    
+    c = ax.imshow(value, cmap="inferno", aspect="auto",
+                  norm=matplotlib.colors.LogNorm(vmin=1e-9, vmax=1e0),
+                  interpolation="bicubic",
+                  extent=[0,length(sliprate[1,:]), 0,16])
+    
+    ax.set_xlabel("Timesteps")
+    ax.set_ylabel("Depth (km)")
+
+    ax.invert_yaxis()
+    cbar = fig.colorbar(c)
+    #   cbar.set_ticks(cbar.get_ticks()[1:2:end])
+    
+    show()
+    figname = string(path, "slr03.png")
+    fig.savefig(figname, dpi = 300)
+    
+end
+
 # spatiotemporal imshow
 function sptempPlot(seismic_slipvel2, FltX)
     
