@@ -113,30 +113,30 @@ function eqCyclePlot(sliprate, FltX)
 end
 
 # spatiotemporal imshow
-function sptempPlot(seismic_slipvel2, FltX)
+function sptempPlot(seismic_slipvel, FltX)
     
-    indx = findall(abs.(FltX) .<= 16e3)[1]
-    value = seismic_slipvel2[indx:end,:]
+    indx = findall(abs.(FltX) .<= 16)[1]
+    value = transpose(seismic_slipvel[:, indx:end])
     
-    depth = -FltX[indx:end]./1e3
+    depth = -FltX[indx:end]
 
     plot_params()
-    fig = PyPlot.figure(figsize=(7.2, 4.45))
+    fig = PyPlot.figure(figsize=(12.2, 4.45))
     ax = fig.add_subplot(111)
 
     # for sliprate
     c = ax.imshow(value, cmap="inferno", aspect="auto",
-                  norm=matplotlib.colors.LogNorm(vmin=1e-4, vmax=1e0),
+                  norm=matplotlib.colors.LogNorm(vmin=1e-12, vmax=1e0),
                   interpolation="bicubic",
-                  extent=[0,length(seismic_slipvel2[1,:])/10, 0,16])
+                  extent=[0,length(seismic_slipvel), 0,16])
 
     # for stress
     #  c = ax.imshow(value, cmap="inferno", aspect="auto",
-                  #  norm=matplotlib.colors.LogNorm(vmin=20, vmax=50),
+                  #  vmin=22.5, vmax=40,
                   #  interpolation="bicubic",
-                  #  extent=[0,length(seismic_slipvel2[1,:])/10, 0,16])
+                  #  extent=[0,length(seismic_slipvel[1,:]), 0,16])
     
-    ax.set_xlabel("Time (s)")
+    ax.set_xlabel("Timesteps")
     ax.set_ylabel("Depth (km)")
 
     ax.invert_yaxis()
@@ -183,18 +183,19 @@ function alphaaPlot(alphaa, time_, yr2sec)
 end
 
 # Plot cumulative slip
-function cumSlipPlot(delfsec, delf5yr, FltX)
-    indx = findall(abs.(FltX) .<= 18e3)[1]
+function cumSlipPlot(delfsec, delfyr, FltX)
+    indx = findall(abs.(FltX) .<= 18)[1]
 
-    delfsec2 = delfsec[indx:end, :]
+    delfsec2 = transpose(delfsec[:,indx:end])
+    delfyr2 = transpose(delfyr)
 
     plot_params()
     fig = PyPlot.figure(figsize=(7.2, 4.45))
     ax = fig.add_subplot(111)
     plt.rc("font",size=12)
 
-    ax.plot(delf5yr, -FltX/1e3, color="royalblue", lw=1.0)
-    ax.plot(delfsec2, -FltX[indx:end]/1e3, color="chocolate", lw=1.0)
+    ax.plot(delfyr2, FltX, color="royalblue", lw=1.0)
+    ax.plot(delfsec2, FltX[indx:end], color="chocolate", lw=1.0)
     ax.set_xlabel("Accumulated Slip (m)")
     ax.set_ylabel("Depth (km)")
     ax.set_ylim([0,24])

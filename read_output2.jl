@@ -5,9 +5,10 @@ include("post/paleoseismic_plots.jl")
 include("post/cumulative_slip.jl")
 
 # path to save files
-global path = "$(@__DIR__)/plots/save_dynamic01/"
+global path = "$(@__DIR__)/plots/save_dynamic03/"
+mkpath(path)
 
-global out_path = "$(@__DIR__)/data/save_dynamic01/"
+global out_path = "$(@__DIR__)/data/save_dynamic03/"
 
 # Global variables
 yr2sec = 365*24*60*60
@@ -24,9 +25,8 @@ taubefore = event_stress[:,1:indx]
 tauafter = event_stress[:,indx+1:end]
 
 delfafter = readdlm(string(out_path, "coseismic_slip.out"), header=false)
-#  stress = readdlm(string(out_path, "stress.out"), header=false)
 #  slip = readdlm(string(out_path, "slip.out"), header=false)
-#  sliprate = readdlm(string(out_path, "sliprate.out"), header=false)
+sliprate = readdlm(string(out_path, "sliprate.out"), header=false)
 
 # Order of storage: Seff, tauo, FltX, cca, ccb, xLf
 params = readdlm(string(out_path, "params.out"), header=false)
@@ -49,7 +49,9 @@ rho2 = 2500
 vs2 = 0.6*vs1
 mu = rho2*vs2^2
 
-#  delfsec, delfyr = cumSlip(slip, sliprate, t)
+delfsec = readdlm(string(out_path, "delfsec.out"))
+delfyr = readdlm(string(out_path, "delfyr.out"))
+stress = readdlm(string(out_path, "stress.out"), header=false)
 
 #  start_index = get_index(seismic_stress, taubefore)
 #  stressdrops = taubefore .- tauafter
