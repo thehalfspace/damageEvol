@@ -18,22 +18,8 @@
 #  file  = jldopen("$(@__DIR__)/data/save_dynamic01.jld2", "w")
 
 # Output directory to save data
-out_dir = "$(@__DIR__)/data/save_dynamic03/"
+out_dir = "$(@__DIR__)/data/model02_test5/"
 mkpath(out_dir)
-
-
-# Healing exponential function
-function healing2(t,tStart,dam)
-    """ hmax: coseismic damage amplitude
-        r: healing rate (0.05 => 80 years to heal completely)
-                        (0.8 => 8 years to heal completely)
-    """
-    hmax = 0.1
-    r = 0.5    # 0.05 (debug05)
-
-    hmax*(1 .- exp.(-r*(t .- tStart)/P[1].yr2sec)) .+ dam
-end
-
 
 # Healing parameter
 function αD(t, tStart, dam)
@@ -54,15 +40,17 @@ function αD(t, tStart, dam)
 
 end
 
-###---------------------------------###
-# Damage parameter
-#  βD(it) = 0.07*log10.(it .+ 1) .+ 0.90
+# Healing exponential function
+function healing2(t,tStart,dam)
+    """ hmax: coseismic damage amplitude
+        r: healing rate (0.05 => 80 years to heal completely)
+                        (0.8 => 8 years to heal completely)
+    """
+    hmax = 0.04
+    r = 0.5    # 0.05 (debug05)
 
-#  betaa = βD(1:100)
-#  betaa[betaa .> 1] .= 1.0
-
-
-###----------------------------------###
+    hmax*(1 .- exp.(-r*(t .- tStart)/P[1].yr2sec)) .+ dam
+end
 
 function main(P)
 
@@ -77,6 +65,7 @@ function main(P)
     #  W_orig = W[:,:,damage_idx]
     #  damage_amount::Float64 = 1.0
 
+    alphaa = 0.90
 
     #  wgll2::Array{Float64,2} = S.wgll*S.wgll';
 
@@ -138,7 +127,7 @@ function main(P)
 
 
     # Save output variables at certain timesteps: define those timesteps
-    tvsx::Float64 = 2e-3*P[1].yr2sec  # 2 years for interseismic period
+    tvsx::Float64 = 2e-4*P[1].yr2sec  # 2 years for interseismic period
     tvsxinc::Float64 = tvsx
 
     tevneinc::Float64 = 0.1    # 0.5 second for seismic period
@@ -178,8 +167,6 @@ function main(P)
     p = aspreconditioner(ml)
     tmp = copy(a)
 
-    #  alphaa = 0.6*ones(700000)
-    alphaa = 0.6
 
     # faster matrix multiplication
      #  Ksparse = Ksparse'
@@ -308,7 +295,8 @@ function main(P)
 
 
             # Healing stuff
-            if it > 3 #&& t/P[1].yr2sec > 10
+            if it > 3
+            #  if t > 12*P[1].yr2sec
                 alphaa = healing2(t, tStart2, dam)
                 #  alphaa[it] = αD(t, tStart2, dam)
             
@@ -434,32 +422,39 @@ function main(P)
             
             # at the end of each earthquake, the shear wave velocity in the damaged zone reduces by 10%
 
-                # Original stuff
-                #  alphaa[it] = 0.90*alphaa[it-1]
-                #  dam = alphaa[it]
-                
-                alphaa = 0.6
-                dam = alphaa
+                # Time condition of 10 years
+                #  if t > 10*P[1].yr2sec
 
-                #  if dam < 0.80
-                    #  alphaa[it] = 0.80
-                    #  dam = 0.80
+                    # use this for no permanent damage
+                    #  alphaa = 0.6
+                    #  dam = alphaa
+
+
+                    # Use this for permanent damage
+                    alphaa = alphaa - 0.05
+                    dam = alphaa
+                    if dam < 0.60
+                        alphaa = 0.60
+                        dam = 0.60
+                    end
+                    
+                    tStart2 = t 
+                    
+                    for id in did
+                        Ksparse[id] = alphaa*Korig[id]
+                    end
+
+                    # Linear solver stuff
+                    kni = -Ksparse[P[4].FltNI, P[4].FltNI]
+                    nKsparse = -Ksparse
+                    # multigrid
+                    ml = ruge_stuben(kni)
+                    p = aspreconditioner(ml)
+
                 #  end
 
-                tStart2 = t 
-                
-                for id in did
-                    Ksparse[id] = alphaa*Korig[id]
-                end
-
-                # Linear solver stuff
-                kni = -Ksparse[P[4].FltNI, P[4].FltNI]
-                nKsparse = -Ksparse
-                # multigrid
-                ml = ruge_stuben(kni)
-                p = aspreconditioner(ml)
-
                 println("alphaa = ", alphaa)
+
             #  end
 
         end
@@ -472,11 +467,10 @@ function main(P)
         if t > tvsx
             ntvsx = ntvsx + 1
             idd += 1
-            #  output.is_slip[:,ntvsx] = 2*d[P[4].iFlt] .+ P[2].Vpl*t
-            #  output.is_slipvel[:,ntvsx] = 2*v[P[4].iFlt] .+ P[2].Vpl
-            #  output.is_stress[:,ntvsx] = (tau + P[3].tauo)./1e6
-            #  write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
             write(dfyr, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
+            write(slip, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
+            write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
+            write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
 
             tvsx = tvsx + tvsxinc
         end
@@ -489,21 +483,20 @@ function main(P)
                 tevneb = t
                 tevne = tevneinc
 
-                #  output.seismic_slip[:,nevne] = 2*d[P[4].iFlt] .+ P[2].Vpl*t
-                #  output.seismic_slipvel[:,nevne] = 2*v[P[4].iFlt] .+ P[2].Vpl
-                #  output.seismic_stress[:,nevne] = (tau + P[3].tauo)./1e6
-                #  write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
                 write(dfsec, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
+                write(slip, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
+                write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
+                write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
             end
 
             if idelevne == 1 && (t - tevneb) > tevne
                 nevne = nevne + 1
                 idd += 1
 
-                #  output.seismic_slip[:,nevne] = 2*d[P[4].iFlt] .+ P[2].Vpl*t
-                #  output.seismic_slipvel[:,nevne] = 2*v[P[4].iFlt] .+ P[2].Vpl
-                #  output.seismic_stress[:,nevne] = (tau + P[3].tauo)./1e6
                 write(dfsec, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
+                write(slip, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
+                write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
+                write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
                 tevne = tevne + tevneinc
             end
 
@@ -519,13 +512,12 @@ function main(P)
             #  println("Vfmax = ", maximum(current_sliprate))
         end
 
-        #  @printf("\n Alpha = %1.5g\n", alphaa[it])
 
         # Write stress, sliprate, slip to file every 10 timesteps
-        if mod(it,10) == 0
-            write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
-            write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
-        end
+        #  if mod(it,10) == 0
+            #  write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
+            #  write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
+        #  end
 
         # Determine quasi-static or dynamic regime based on max-slip velocity
         #  if isolver == 1 && Vfmax < 5e-3 || isolver == 2 && Vfmax < 2e-3
@@ -535,8 +527,6 @@ function main(P)
             isolver = 2
         end
 
-        #  output.Vfmax[it] = Vfmax
-        
         # Write max sliprate and time
         write(Vf_time, join(hcat(t,Vfmax,Vf[end], alphaa), " "), "\n")
 
