@@ -10,15 +10,12 @@
 #	Adapted from Kaneko et al. (2011)
 #	and J.P. Ampuero's SEMLAB
 #
-#   CHANGELOG:
-#       * 06-15-2019: Assemble stiffness as sparse matrix
-#       * 04-20-2019: Implement multithreading for element calculations
 ###############################################################################
 
 #  file  = jldopen("$(@__DIR__)/data/save_dynamic01.jld2", "w")
 
 # Output directory to save data
-out_dir = "$(@__DIR__)/data/model02_test5/"
+out_dir = "$(@__DIR__)/data/model02_test6/"
 mkpath(out_dir)
 
 # Healing parameter
@@ -127,7 +124,7 @@ function main(P)
 
 
     # Save output variables at certain timesteps: define those timesteps
-    tvsx::Float64 = 2e-4*P[1].yr2sec  # 2 years for interseismic period
+    tvsx::Float64 = 2e-0*P[1].yr2sec  # 2 years for interseismic period
     tvsxinc::Float64 = tvsx
 
     tevneinc::Float64 = 0.1    # 0.5 second for seismic period
@@ -375,14 +372,6 @@ function main(P)
 
         Vfmax = 2*maximum(v[P[4].iFlt]) .+ P[2].Vpl
 
-
-        #----
-        # Output variables at different depths for every timestep
-        # Omitted the part of code from line 871 - 890, because I
-        # want to output only certain variables each timestep
-        #----
-
-
         #-----
         # Output the variables before and after events
         #-----
@@ -395,20 +384,13 @@ function main(P)
             tStart = t
             taubefore = (tau +P[3].tauo)./1e6
 
-            #  output.tStart[it_s] = output.time_[it]
-            #  output.taubefore[:,it_s] = (tau +P[3].tauo)./1e6
             vhypo, indx = findmax(2*v[P[4].iFlt] .+ P[2].Vpl)
             hypo = P[3].FltX[indx]
-            
-            #  if output.time_[it] > 50*P[1].yr2sec
-            #  end
 
         end
         if Vfmax < 0.99*P[2].Vthres && slipstart == 1
             it_e = it_e + 1
             delfafter = 2*d[P[4].iFlt] .+ P[2].Vpl*t .- delfref
-            #  output.tauafter[:,it_e] = (tau + P[3].tauo)./1e6
-            #  output.tEnd[it_e] = output.time_[it]
             
             tEnd = t 
             tauafter = (tau +P[3].tauo)./1e6
@@ -467,10 +449,8 @@ function main(P)
         if t > tvsx
             ntvsx = ntvsx + 1
             idd += 1
+            #  write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
             write(dfyr, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
-            write(slip, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
-            write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
-            write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
 
             tvsx = tvsx + tvsxinc
         end
@@ -483,10 +463,8 @@ function main(P)
                 tevneb = t
                 tevne = tevneinc
 
+                #  write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
                 write(dfsec, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
-                write(slip, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
-                write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
-                write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
             end
 
             if idelevne == 1 && (t - tevneb) > tevne
@@ -494,9 +472,6 @@ function main(P)
                 idd += 1
 
                 write(dfsec, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
-                write(slip, join(2*d[P[4].iFlt] .+ P[2].Vpl*t, " "), "\n")
-                write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
-                write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
                 tevne = tevne + tevneinc
             end
 
@@ -514,10 +489,10 @@ function main(P)
 
 
         # Write stress, sliprate, slip to file every 10 timesteps
-        #  if mod(it,10) == 0
-            #  write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
-            #  write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
-        #  end
+        if mod(it,10) == 0
+            write(sliprate, join(2*v[P[4].iFlt] .+ P[2].Vpl, " "), "\n")
+            write(stress, join((tau + P[3].tauo)./1e6, " "), "\n")
+        end
 
         # Determine quasi-static or dynamic regime based on max-slip velocity
         #  if isolver == 1 && Vfmax < 5e-3 || isolver == 2 && Vfmax < 2e-3

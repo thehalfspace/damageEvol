@@ -8,79 +8,131 @@ using PyPlot
 using StatsBase
 using LaTeXStrings
 using PyCall
+mpl = pyimport("matplotlib")
+
+
+# Matplotlib global tweaks
+#  mpl.rcParams["axes.linewidth"] = 2.0
 
 # Plot Vfmax
 function VfmaxPlot(Vfmax, time_, yr2sec)
 
     #  Vfmax = maximum(SlipVel, dims = 1)[:]
     
-    fig = PyPlot.figure(figsize=(8,6), dpi = 300)
+    
+    fig = PyPlot.figure(figsize=(12,5))
     ax = fig.add_subplot(111)
     
-    plt.rc("font",size=12)
-    ax.plot(time_./yr2sec, Vfmax, lw = 1)
+    plt.rc("font",size=24)
+    plt.rc("axes", linewidth=2.0)
+
+    ax.plot(time_./yr2sec, Vfmax, lw = 2.0)
     ax.set_xlabel("Time (years)")
     ax.set_ylabel("Max. Slip rate (m/s)")
-    ax.set_title("Max. slip rate on fault")
     ax.set_yscale("log")
     ax.get_yaxis().set_tick_params(which="both", direction="in")
     ax.get_xaxis().set_tick_params(which="both", direction="in")
     #  plt.rc("grid", linestyle="--", color="black", alpha=0.5)
     #  plt.grid("True")
+
+    ax.set_xlim([230,400])
     
+    plt.tight_layout()
     show()
+    
+    figname = string(path, "Vfmax01.png")
+    fig.savefig(figname, dpi = 300)
+end
 
+# Plot friction parameters
+function icsPlot(a_b, Seff, tauo, FltX)
+    fig = PyPlot.figure(figsize=(8,10))
+    ax = fig.add_subplot(111)
+    
+    plt.rc("font",size=16)
+    plt.rc("axes", linewidth=2.0)
 
-    figname = string(path, "Vfmax.png")
+    ax.plot(Seff, -FltX./1e3, lw = 2.0, label="Normal Stress")
+    ax.plot(tauo, -FltX./1e3, lw = 2.0, label="Shear Stress")
+    ax.set_xlabel("Stresses (Mpa)")
+    ax.set_ylabel("Depth (km)")
+    
+    ax2 = ax.twiny()
+    ax2.plot(a_b, -FltX./1e3, lw = 2.0, label="(a-b)")
+    ax2.set_xlabel("Rate-state friction value")
+    
+    ax.set_ylim([0,16])
+    ax.invert_yaxis()
+    ax.get_yaxis().set_tick_params(which="both", direction="in")
+    ax.get_xaxis().set_tick_params(which="both", direction="in")
+    #  plt.rc("grid", linestyle="--", color="black", alpha=0.5)
+    #  plt.grid("True")
+
+    
+    #  plt.tight_layout()
+    show()
+    
+    figname = string(path, "ics_02.png")
     fig.savefig(figname, dpi = 300)
 end
 
 # Plot slip vs event number
-function slipPlot(delfafter, FltX, Mw, tStart)
+function slipPlot(delfafter, rupture_len, FltX, Mw, tStart)
 
-    indx_10 = findall(abs.(FltX) .<= 10e3)[1]
-    
-    fig = PyPlot.figure(figsize=(1.5,8), dpi = 300)
-    ax = fig.add_subplot(111)
+    fig = PyPlot.figure(figsize=(12,8))
+    ax1 = fig.add_subplot(121)
 
-    xaxis = tStart[Mw .>4.8]   #collect(1:length(delfafter[1,:]))
+    xaxis = tStart[Mw .>2.8]   #collect(1:length(delfafter[1,:]))
 
-    offset = 4
-    plt.rc("font",size=3)
-    #ax.barh(xaxis.-offset, delfafter[end-1,:], label="At trench: 60 m depth", height=8)
-    #ax.barh(xaxis.+offset, delfafter[631,:], label="At 6 km depth", height=8)
+    Mw2 = Mw[Mw .> 2.8]
+
+    plt.rc("font",size=14)
     
-    ax.barh(xaxis, Mw[Mw .> 4.8], height=8, align="center"); ax.set_xlim([5,6.4])
-    
-    ax.set_xlabel("Magnitude")
+    # Normalize colorbar
+    norm = matplotlib.colors.Normalize(vmin = minimum(Mw2), vmax=maximum(Mw2)) 
+    colors = matplotlib.cm.inferno_r(norm(Mw2))
+
+    ax1.barh(xaxis, delfafter[end-1,:], height=10, 
+             label="At trench: 60 m depth", color=colors, align="center"); 
+    ax1.set_xlabel("Coseismic Slip (m) at 60 m depth")
     #ax.set_xlabel("Coseismic slip (m)")
-    ax.set_ylabel("Time (yr)")
-    ax.get_yaxis().set_tick_params(which="both", direction="in")
-    ax.get_xaxis().set_tick_params(which="both", direction="in")
-    ax.set_yticks(round.(xaxis, digits = 0))
-    ax.invert_yaxis()
-    #  plt.rc("grid", linestyle="--", color="black", alpha=0.5)
-    #  plt.grid("True")
-    #plt.legend()
+    ax1.set_ylabel("Time (yr)")
+    ax1.get_yaxis().set_tick_params(which="both", direction="in")
+    ax1.get_xaxis().set_tick_params(which="both", direction="in")
+    #  ax.set_yticks(collect(0:50:maximum(xaxis)))
+    #  ax.set_xlim([0, 2])
+
+    trench_depth = findall(abs.(FltX) .< 6.0e3)[1]
+
+    ax2 = fig.add_subplot(122)
     
+    ax2.barh(xaxis, delfafter[trench_depth,:], height=10, 
+             label="At trench: 6 km depth", color=colors, align="center"); 
+    
+    #  ax2.set_xlim([0, 2])
+    ax2.set_xlabel("Coseismic Slip (m) at 6 km depth")
+    
+    #  ax.set_yticks(round.(xaxis, digits = 0))
+    #  plt.legend()
+    sm = matplotlib.cm.ScalarMappable(norm=norm, cmap="inferno_r")
+    sm.set_array([])
+    fig.colorbar(sm, shrink=0.9, label="Mw")
+
     show()
-
-
+    
     figname = string(path, "mw2_time.png")
     fig.savefig(figname, dpi = 300)
 end
 
 # Plot Alphaa
 function alphaaPlot(alphaa, time_, yr2sec)
-
-    #  Vfmax = maximum(SlipVel, dims = 1)[:]
     
-    fig = PyPlot.figure(figsize=(8,2), dpi = 300)
+    fig = PyPlot.figure(figsize=(12,4))
     ax = fig.add_subplot(111)
     
-    plt.rc("font",size=8)
+    plt.rc("font",size=16)
 
-    ax.plot(time_./yr2sec, alphaa, lw = 1)
+    ax.plot(time_./yr2sec, alphaa, lw = 2)
     ax.set_xlabel("Time (years)")
     ax.set_ylabel("Shear Modulus Contrast (%)")
     ax.get_yaxis().set_tick_params(which="both", direction="in")
@@ -88,10 +140,11 @@ function alphaaPlot(alphaa, time_, yr2sec)
     #  plt.rc("grid", linestyle="--", color="black", alpha=0.5)
     #  plt.grid("True")
     
+    plt.tight_layout()
     show()
 
 
-    figname = string(path, "alphaa.png")
+    figname = string(path, "alphaa_01.png")
     fig.savefig(figname, dpi = 300)
 end
 
@@ -130,9 +183,6 @@ end
 
 # Plot cumulative slip
 function cumSlipPlot(delfsec, delf5yr, FltX)
-    
-    FZ = -8
-
     indx = findall(abs.(FltX) .<= 18e3)[1]
 
     delfsec2 = delfsec[indx:end, :]
@@ -155,7 +205,44 @@ function cumSlipPlot(delfsec, delf5yr, FltX)
     
     show()
     
-    figname = string(path, "cumslip.png")
+    figname = string(path, "cumslip_02.png")
+    fig.savefig(figname, dpi = 300)
+
+end
+
+function csPlot2(vfsec, delf5yr, start_index, FltX)
+    indx = findall(abs.(FltX) .<= 18e3)[1]
+    vfsec = log10.(vfsec[indx:end, :])
+
+    #  s_end = size(delfsec)[2]
+    #  seis_indx = push!(start_index,s_end)
+    
+    y = -FltX./1e3
+
+    Xsec = LinRange(0, maximum(vfsec), length(vfsec[1,:]))
+
+    xgrid_sec,ygrid_sec = Matlab.meshgrid(Xsec, y)
+
+    fig = PyPlot.figure(figsize=(10,7), dpi=300)
+    ax = fig.add_subplot(111)
+    plt.rc("font",size=12)
+
+    cbar = ax.contourf(xgrid_sec, ygrid_sec, vfsec)
+    #  ax.contourf(xgrid_yr, ygrid_yr, delf5yr)
+
+    ax.set_xlabel("Timesteps (Variable)")
+    ax.set_ylabel("Depth (km)")
+    ax.set_ylim([0,24])
+    #  ax.set_xlim([1,20])
+    
+    ax.invert_yaxis()
+    #  ax.get_yaxis().set_tick_params(which="both", direction="in")
+    #  ax.get_xaxis().set_tick_params(which="both", direction="in")
+    #  plt.rc("grid", linestyle="--", color="black", alpha=0.5)
+    plt.colorbar(cbar)
+    show()
+    
+    figname = string(path, "cs2.png")
     fig.savefig(figname, dpi = 300)
 
 end
